@@ -1,0 +1,20 @@
+## Analyzing Influence in Wikipedia Adminship Elections: Unveiling the Power of Comments
+
+* Commentary Influence Analysis:
+- The voting system is open so that everybody can see the comments written by other voters, this necessarily leads to influence between voters which is interesting to analyze.
+- Examine the influence of the first votes on the subsequent voting behavior.
+- Investigate how vocabulary and language complexity in comments can sway other users' opinions (for example if the type of arguments, choice of word, etc tends to become similar) 
+- Determine whether the quantity of votes (frequency of appearance of a voter) or the quality of comments (length and language complexity) is more influential on the voting pattern.
+
+* Voter Group Dynamics:
+- Identify distinct voter groups based on their expression styles and voting patterns (we have access in the database to tag about the level of support or opposition for lot of the votes which could be helpful for this task).
+- Conduct network analysis to identify influential editors within the Wikipedia community.
+- Use clustering algorithms to group voters and assess if distinct profiles predict adminship outcomes.
+
+* Topic Modeling for Comments:
+- Apply topic modeling techniques to comments to uncover common themes, sentiment and concerns raised by the community.
+- Track the evolution of these topic and requirements over time.
+- Especially, connect changes in adminship elections with the timeline of Wikipedia's growth. In particular, how the emergence of new rules and criteria for contributors have appeared in the comments and may have influenced voting behavior.
+- We can highlight that lot of people raised concerns about scaling issues in online communities, the idea behind that is that open access is not viable because too many people is involved which generate some kind of chaos. But Wikipedia seems to defies this trend and it could be interesting to examine the role of election system (in particular opposed votes and related comments) in the process of self-organization and hierarchy building of the wikipedia community in order to keep the platform stable.
+
+These analyses can offer valuable insights into the functioning of online communities and their decision-making mechanisms, moreover it gives a great example of how an opened and argued voting system leads to influence and to catch the intensity of this influence. 
