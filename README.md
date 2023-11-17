@@ -3,7 +3,9 @@ by Gaëlle Verdon, Jean-Daniel Rouveyrol, Emma Boehly, David Bekri and Alexandre
 
 ## Abstract : 
 This project aims to understand how people interact and form communities in the Wikipedia Requests for Adminship (RfA) dataset. An interesting fact is that, voters can see the votes and comments casted by other voters at all times, which can result in their opinion being influenced. Instead of trying to predict if adminship requests will be successful or not, we're interested in understanding the cascading influence of early votes, how certain patterns develop, and if there are influential groups in the voting network.\
+\
 To grasp the complex interactions in the Wikipedia RfA dataset, we use different indicators that help us see how the community is influenced. We focus on two main things: the voting network and the comments that come with it.\
+\
 By using network analysis, we look at how votes change over time, finding important nodes and spotting patterns in the RfA dataset.
 We also analyze user comments to understand the feelings, reasons, and discussions around adminship requests through sentiment analysis and categorizing themes.
 
