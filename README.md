@@ -48,9 +48,9 @@ The primary objective of these various analyses is to examine whether distinct g
 
 
 ## Proposed Timeline :
-17.11.23 : P2 Milestone - Pre-processing our data and begin first analysis
-08.12.23 : Network and Comment Analysis complete
-15.12.23 : Combination Analysis complete
+17.11.23 : P2 Milestone - Pre-processing our data and begin first analysis\
+08.12.23 : Network and Comment Analysis complete\
+15.12.23 : Combination Analysis complete\
 22.12.23 : P3 Milestone - Final milestone: Data Story
 
 ## Team Contribution : 
