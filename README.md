@@ -7,6 +7,14 @@ To comprehend the intricate dynamics of interactions within the Wikipedia Reques
 Employing network analysis, we dissect the temporal evolution of votes, identifying influential nodes and discerning cascading patterns within the Wikipedia Requests for Adminship (RfA) dataset.
 Qualitative insights are gleaned through sentiment analysis and thematic categorization of user comments, providing a nuanced understanding of sentiment, rationales, and discourse surrounding adminship requests.
 
+-------------------------------------------
+
+This project aims to understand how people interact and form communities in the Wikipedia Requests for Adminship (RfA) dataset. Instead of trying to predict if adminship requests will be successful or not, we're interested in figuring out how early votes impact the community, how certain patterns develop, and if there are influential groups in the voting network.
+To grasp the complex interactions in the Wikipedia RfA dataset, we use different indicators that help us see how the community has an influence. We focus on two main things: the voting network and the comments that come with it.
+By using network analysis, we look at how votes change over time, finding important nodes and spotting patterns in the RfA dataset.
+We also analyze user comments to understand the feelings, reasons, and discussions around adminship requests through sentiment analysis and categorizing themes.
+
+
 
 ## Research Question :
 In this study, we would like to answer these questions:
