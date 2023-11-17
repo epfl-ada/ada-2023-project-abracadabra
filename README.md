@@ -1,8 +1,11 @@
-# (Add a title)
+# Exploring Influence in Wikipedia Requests for Adminship
 by Gaëlle Verdon, Jean-Daniel Rouveyrol, Emma Boehly, David Bekri and Alexandre Maillard
 
 ## Abstract : 
-Add some few line to explain the main idea
+This project endeavors to unravel the intricate web of interactions and community dynamics inherent in the Wikipedia Requests for Adminship (RfA) dataset. Rather than aiming to predict the success or failure of adminship requests, our focus lies in understanding the cascading influence of early votes, the emergence of community-driven patterns, and the existence of influential clusters within the voting network.
+To comprehend the intricate dynamics of interactions within the Wikipedia Requests for Adminship (RfA) dataset, we employ various indicators, each offering a distinct lens through which community influence is observed. Two primary facets of analysis emerge — the voting network and the accompanying comments.
+Employing network analysis, we dissect the temporal evolution of votes, identifying influential nodes and discerning cascading patterns within the Wikipedia Requests for Adminship (RfA) dataset.
+Qualitative insights are gleaned through sentiment analysis and thematic categorization of user comments, providing a nuanced understanding of sentiment, rationales, and discourse surrounding adminship requests.
 
 
 ## Research Question :
@@ -12,8 +15,8 @@ In this study, we would like to answer these questions:
 - How can we find relationships of influence in a vote such as wikipedia RfA?
 
 ## Additional dataset :
-None of the following datasets have been found for the moment, but they remain potential sources for future analysis, which is why we have included them below. 
-- A dataset with the statistics of Wikipedia over time
+Not all of the following datasets have been found for the moment, but they remain potential sources for future analysis, which is why we have included them below. 
+- https://data.world/wikimedia/monthly-wikimedia-editor-activity : This dataset contains the activity by months of all the wikipedia’s user since 2001 until 2015. We’ll use it to mesure the influence of the activity on the result of the vote with the recent activity and the activity overall before the request for adminship.
 - A dataset of the subjects of articles published or modified by users 
 
 ## Methods : 
