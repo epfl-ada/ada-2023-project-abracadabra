@@ -17,7 +17,8 @@ In this study, we would like to answer these questions:
 ## Additional dataset :
 Not all of the following datasets have been found for the moment, but they remain potential sources for future analysis, which is why we have included them below. 
 - https://data.world/wikimedia/monthly-wikimedia-editor-activity : This dataset contains the activity by months of all the wikipedia’s user since 2001 until 2015. We’ll use it to mesure the influence of the activity on the result of the vote with the recent activity and the activity overall before the request for adminship.
-- A dataset of the subjects of articles published or modified by users 
+- https://snap.stanford.edu/data/wiki-meta.html : This is 2 datasets of the edit on wikipedia with the user's name. Those datasets will be useful as the first one to check the influence of the activity in the vote process. 
+- A dataset of the subjects of articles published or modified by users.
 
 ## Methods : 
 ### Network Analysis : 
