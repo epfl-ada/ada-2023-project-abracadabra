@@ -30,7 +30,9 @@ None of the following datasets have been found for the moment, but they remain p
 - Sentiment Analysis to create cluster.
 
 ### Combination of both
-The final stage of this project will be to combine the two analyses (network and comment) to cross-check the clusters to see if the groups of people are the same and to see if the conclusions drawn from one method apply to the second.
+The final stage of this project will be to combine the two analyses (network and comment) to cross-check the clusters to see if the groups of people are the same and to see if the conclusions drawn from one method apply to the second. 
+
+The main aim of these various analyses will be to see if there are groups of people both with the network and with the comments who share common points such as ways of expressing themselves, common ideas, etc...
 
 
 ## Proposed Timeline :
