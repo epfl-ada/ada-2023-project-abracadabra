@@ -36,7 +36,7 @@ Not all of the following datasets have been found for the moment, but they remai
 ### Combination of both
 The final stage of this project will be to combine the two analyses (network and comment) to cross-check the clusters to see if the groups of people are the same and to see if the conclusions drawn from one method apply to the second. 
 
-The main aim of these various analyses will be to see if there are groups of people both with the network and with the comments who share common points such as ways of expressing themselves, common ideas, etc...
+The primary objective of these diverse analyses is to examine whether discernible groups, evident in both the network structure and comments, exhibit shared characteristics, including common modes of expression and shared ideas. Furthermore, these analyses aim to uncover how influence is manifested within both the network dynamics and the qualitative content of comments.
 
 
 ## Proposed Timeline :
