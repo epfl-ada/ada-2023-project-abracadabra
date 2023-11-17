@@ -30,7 +30,7 @@ Not all of the following datasets have been found for the moment, but they remai
 
 ## Methods : 
 ### Network Analysis : 
-- Build network graphs of the voters (source) to have a visualization of how they are linked to each other and see if we can extract clusters from them. Ideally we would like to do this plot interactive to visualize the evolution through time and see if the clusters are stable/similar or not (good starting point because we would like to have some stability to have a meaningful analysis).
+- Build network graphs of the voters (source) to have a visualization of how they are linked to each other and see if we can extract clusters from them. Ideally we would like to do this plot interactive to visualize the evolution through time and see if the clusters are stable/similar or not.
 - Cluster positive and negative votes for each election : this point will enable us to see whether clusters overlap across elections and whether we can create groups of users who share the same votes/ideas.
 - Modularity to evaluate community quality (clustering the support votes, of opposition).
 - Extract voting time pattern in the vote to see if some voters tend to vote early and others later, enabling us to infer who may have more chance to be the influencer (because voting at the beginning) or to get influenced (because voting at the end).
