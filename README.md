@@ -1,6 +1,6 @@
 # Exploring Influence in Wikipedia Requests for Adminship
 by Gaëlle Verdon, Jean-Daniel Rouveyrol, Emma Boehly, David Bekri and Alexandre Maillard
-...
+
 ## Abstract : 
 This project aims to understand how people interact and form communities in the Wikipedia Requests for Adminship (RfA) dataset. An interesting fact is that, voters can see the votes and comments casted by other voters at all times, which can result in their opinion being influenced. Instead of trying to predict if adminship requests will be successful or not, we're interested in understanding the cascading influence of early votes, how certain patterns develop, and if there are influential groups in the voting network.\
 \
