@@ -1,6 +1,16 @@
 # Exploring Influence in Wikipedia Requests for Adminship
 by Gaëlle Verdon, Jean-Daniel Rouveyrol, Emma Boehly, David Bekri and Alexandre Maillard
 
+## Table of Contents 📋
+1. [Abstract](#abstract)
+2. [Research Questions](#research-questions)
+3. [Proposed Additional Datasets](#proposed-additional-datasets)
+4. [Methods](#methods)
+5. [Proposed Timeline](#proposed-timeline--internal-milestones-im-)
+6. [Organization Within the Team](#organization-within-the-team)
+7. [Questions for TAs](#questions-for-tas-optional)
+
+
 ## Abstract : 
 This project endeavors to unravel the intricate web of interactions and community dynamics inherent in the Wikipedia Requests for Adminship (RfA) dataset. Rather than aiming to predict the success or failure of adminship requests, our focus lies in understanding the cascading influence of early votes, the emergence of community-driven patterns, and the existence of influential clusters within the voting network.
 To comprehend the intricate dynamics of interactions within the Wikipedia Requests for Adminship (RfA) dataset, we employ various indicators, each offering a distinct lens through which community influence is observed. Two primary facets of analysis emerge — the voting network and the accompanying comments.
