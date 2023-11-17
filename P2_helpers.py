@@ -1,9 +1,12 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 import igraph as ig 
 import leidenalg as la
 import networkx as nx
+
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -101,3 +104,41 @@ def generate_cossim_pairs(x):
         for j in range(i+1, x.shape[1]):
             dic[(i, j)] = x[i, j]
     return dic
+
+
+# Compare leiden and louvain algorithm by looking at the number of community for each year and and type of vote
+def plot_comparaison_leiden_louvain_per_type_vote(vote, df_community, df_community_leiden):
+    louvain_vote=df_community[df_community['Vote']==vote][['Year', 'Total nbr of community']]
+    louvain_vote['Algo']='Louvain'
+    leiden_vote=df_community_leiden[df_community_leiden['Vote']==vote][['Year', 'Total nbr of community']]
+    leiden_vote['Algo']='Leiden'
+    louvain_vote['Year'] = louvain_vote['Year'].astype('int')
+    leiden_vote['Year'] = leiden_vote['Year'].astype('int')
+
+    df_combined = pd.concat([louvain_vote, leiden_vote], ignore_index=True)
+    max = df_combined['Total nbr of community'].max()
+    fig, ax = plt.subplots(figsize=(8, 6))
+    sns.barplot(data=df_combined, x='Year', y='Total nbr of community', hue='Algo')
+
+    plt.title('Number of community per year and vote '+str(vote)+' for the Louvain and Leiden algorithm')
+    plt.xlabel('Year')
+    plt.ylabel('Number of community')
+    plt.yticks(np.arange(0, max + 1, 4))
+  
+    plt.show()
+
+#Extract communities with leiden algorithm using a directed graph
+def extract_community_leiden_directed(df, year, vote):
+    df_year=df[df['Year']==year]
+    df_year_vote=df_year[df_year['Vote']==vote]
+    df_year_vote=df_year_vote[['Source', 'Target']]
+
+    #create the network
+    G=nx.from_pandas_edgelist(df_year_vote, source='Source', target='Target', create_using=nx.DiGraph())
+
+    #convert into ig
+    H=ig.Graph.from_networkx(G)
+
+    #extract communities with Leiden algorithm 
+    partition = la.find_partition(H, la.ModularityVertexPartition)
+    return partition
