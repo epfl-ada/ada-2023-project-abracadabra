@@ -1,6 +1,11 @@
 import numpy as np
 import pandas as pd
 
+import igraph as ig 
+import leidenalg as la
+import networkx as nx
+
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 # Start a new round each time the interval between the current voting and the first voting time of the round is greater than the round threshold
 def compute_rounds(data, round_threshold):
@@ -25,3 +30,74 @@ def compute_rounds(data, round_threshold):
             
     rounds = pd.Series(rounds, index=data.index).astype(int)
     return rounds
+
+def select_year(data, year):
+  return data[data['Year'] == year].reset_index(drop=True)
+
+#Helpers to compute to Community 
+def compute_com_size(community_list):
+    community_size=np.zeros(len(community_list), dtype=int)
+    for n, com in enumerate(community_list):
+        community_size[n]=len(com)
+    return(community_size)
+
+def extract_community_louvain(df, year, vote):
+    #Data, Year, type of vote (-1,0,1) for negative, positive or neutral respectively required
+    df_year=df[df['Year']==year]
+    df_year_vote=df_year[df_year['Vote']==vote]
+    df_year_vote=df_year_vote[['Source', 'Target']]
+    #create the network
+    G=nx.from_pandas_edgelist(df_year_vote, source='Source', target='Target')
+    #extract communities with Louvain algorithm 
+    G_community=nx.community.louvain_communities(G, seed=1234)
+    
+    return G_community
+
+def extract_community_leiden(df, year, vote):
+    #Data, Year, type of vote (-1,0,1) for negative, positive or neutral respectively required
+    df_year=df[df['Year']==year]
+    df_year_vote=df_year[df_year['Vote']==vote]
+    df_year_vote=df_year_vote[['Source', 'Target']]
+
+    #create the network
+    G=nx.from_pandas_edgelist(df_year_vote, source='Source', target='Target')
+    #convert into ig
+    H=ig.Graph.from_networkx(G)
+
+    #extract communities with Leiden algorithm 
+    partition = la.find_partition(H, la.ModularityVertexPartition)
+    
+    return partition
+
+def compute_partition_features(partition):
+    #gives the number of community we have
+    nbr_community=np.max(partition.membership)
+    ind_community_size=[]
+    for i in range (nbr_community):
+        #gives the size of community i+1
+        nbr=sum(partition.membership==np.full_like(partition.membership, fill_value=i+1)) 
+        ind_community_size.append(nbr)
+    return nbr_community, ind_community_size
+
+def tf_idf_matrix(comments):
+    # Create the TF-IDF matrix
+    vectorizer = TfidfVectorizer(stop_words='english', max_features= 5000)
+    tfidf_matrix = vectorizer.fit_transform(comments.values())
+    return tfidf_matrix
+
+def get_idx_lower_bound(keys):
+    keys = [item[1] for item in keys]
+    lower = min(keys)
+    return lower
+
+def get_idx_upper_bound(keys):
+    keys = [item[1] for item in keys]
+    upper = max(keys)
+    return upper
+
+def generate_cossim_pairs(x):
+    dic = {}
+    for i in range(x.shape[0]):
+        for j in range(i+1, x.shape[1]):
+            dic[(i, j)] = x[i, j]
+    return dic
