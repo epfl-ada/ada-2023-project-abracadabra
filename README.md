@@ -61,5 +61,3 @@ The primary objective of these various analyses is to examine whether distinct g
 - Comment Analysis :
   - Topics modelling : Jean-Daniel
   - Sentiment Analysis : David
-
-## Questions for TAs :
