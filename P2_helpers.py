@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
 
+import igraph as ig 
+import leidenalg as la
+import networkx as nx
 
 # Start a new round each time the interval between the current voting and the first voting time of the round is greater than the round threshold
 def compute_rounds(data, round_threshold):
@@ -25,3 +28,26 @@ def compute_rounds(data, round_threshold):
             
     rounds = pd.Series(rounds, index=data.index).astype(int)
     return rounds
+
+def select_year(data, year):
+  return data[data['Year'] == year].reset_index(drop=True)
+
+#Helpers to compute to Community 
+def compute_com_size(community_list):
+    community_size=np.zeros(len(community_list), dtype=int)
+    for n, com in enumerate(community_list):
+        community_size[n]=len(com)
+    return(community_size)
+
+def extract_community_louvain(df, year, vote):
+    #Data, Year, type of vote (-1,0,1) for negative, positive or neutral respectively required
+    df_year=df[df['Year']==year]
+    df_year_vote=df_year[df_year['Vote']==vote]
+    df_year_vote=df_year_vote[['Source', 'Target']]
+    #create the network
+    G=nx.from_pandas_edgelist(df_year_vote, source='Source', target='Target')
+    #extract communities with Louvain algorithm 
+    G_community=nx.community.louvain_communities(G, seed=1234)
+    
+    return G_community
+

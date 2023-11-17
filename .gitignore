@@ -1,2 +1,4 @@
 /.conda
 .DS_Store
+__pycache__/P2_helpers.cpython-39.pyc
+cosine_sim.npy
