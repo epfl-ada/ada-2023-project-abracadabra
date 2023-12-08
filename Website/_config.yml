@@ -1,9 +1,9 @@
 theme: jekyll-theme-minimal
-title: ADA Template Website
+title: A study of influence in decision-making mechanisms
 description: A template website for ADA
 show_downloads: True
 navigation:
   - title: Home
-    url: /
+    url: emmabhl.github.io/
   - title: Example
     url: example
