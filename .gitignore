@@ -1,5 +1,13 @@
+# remove all pycache files
+*.pyc
+__pycache__/
+
+# remove other cache files
 /.conda
 .DS_Store
-__pycache__/P2_helpers.cpython-39.pyc
+
+# remove big files
 cosine_sim.npy
-__pycache__/P2_helpers.cpython-310.pyc
+
+# remove all .csv files
+*.csv
