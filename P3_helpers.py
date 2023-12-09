@@ -116,13 +116,26 @@ def handle_inconsistencies(df):
     df.drop(double_vote.index, inplace=True)
 
     return df
+
+def get_dataframe(path = 'wiki-RfA.txt'):
+    """ Parse the data from the file at the given path, handle inconsistencies and return the resulting DataFrame.
+
+    Args:
+        path (str): Path to the file containing the data
+        
+    Returns:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+    """
+    df = data_parsing(path)
+    df = handle_inconsistencies(df)
+    return df
     
 
 
 
 ########## TIME SERIES GENERATION FUNCTIONS ##########
 
-def get_voting_time(df):
+def get_timeserie_df(df):
     """ Compute the voting time of each vote and the corresponding election round.
 
     Args:
