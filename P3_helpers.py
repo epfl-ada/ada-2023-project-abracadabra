@@ -76,14 +76,17 @@ def handle_inconsistencies(df):
     df['Date'] = df['Date'].str.replace('Nov ', 'November ')
     df['Date'] = df['Date'].str.replace('Dec ', 'December ')
 
-    # Convert Date to datetime
+    # Convert into the right type and format
     df['Date'] = pd.to_datetime(df['Date'], format='%H:%M, %d %B %Y', errors='coerce')
+    df['Vote'] = df['Vote'].astype(int)
+    df['Results'] = df['Results'].astype(int)
+    df['Year'] = df['Year'].astype(int)
 
     # Drop rows with missing values in Source column
     df.dropna(subset=['Source'], inplace=True)  
 
-    # Remove duplicates
 
+    ### Remove duplicates ###
     # Select target with a significant number of duplicates (by manually checking the data we found that 6 discriminate perfectly between users with actual duplicates and users with only missing data or basic comments)
     target_with_duplicates = df[df.duplicated(['Source', 'Target', 'Comment', 'Date'], keep=False)].groupby('Target').size() >= 6
     target_with_duplicates = target_with_duplicates[target_with_duplicates].index
@@ -96,7 +99,6 @@ def handle_inconsistencies(df):
     perc_vote['Result'] = perc_vote.apply(lambda x: 1 if x['1'] >= 70 else -1, axis=1, result_type='reduce')
     # Replace results in duplicates with results in perc_vote
     duplicates['Results'] = duplicates.apply(lambda x: perc_vote.loc[(x['Target'], x['Year'])]['Result'].astype(int), axis=1)
-
 
     # Deal with duplicates that have different years
     correct_year = pd.DataFrame({'Year': duplicates.Date.dt.year, 'Target': duplicates.Target})
@@ -164,12 +166,7 @@ def get_timeserie_df(df):
     # Create a new dataframe completing the original dataframe with the voting time
     df_timeserie = df.join(voting_time.droplevel(0))
 
-    # Convert Vote, Results and Year to int
-    df_timeserie['Vote'] = df_timeserie['Vote'].astype(int)
-    df_timeserie['Results'] = df_timeserie['Results'].astype(int)
-    df_timeserie['Year'] = df_timeserie['Year'].astype(int)
-
-    # 
+    # Compute the round number of each vote
     rounds = (df_timeserie.groupby('Target').apply(lambda x: compute_rounds(x, round_threshold))).rename('Round')
     df_timeserie = df_timeserie.join(rounds.droplevel(0))
 
