@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn.neighbors import KernelDensity
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -96,9 +97,9 @@ def handle_inconsistencies(df):
 
     # Deal with duplicates that have different results 
     perc_vote = (duplicates.groupby(['Target', 'Year']).Vote.value_counts(normalize=True) * 100).unstack(level='Vote')
-    perc_vote['Result'] = perc_vote.apply(lambda x: 1 if x['1'] >= 70 else -1, axis=1, result_type='reduce')
+    perc_vote['Result'] = perc_vote.apply(lambda x: 1 if x[1] >= 70 else -1, axis=1, result_type='reduce')
     # Replace results in duplicates with results in perc_vote
-    duplicates['Results'] = duplicates.apply(lambda x: perc_vote.loc[(x['Target'], x['Year'])]['Result'].astype(int), axis=1)
+    duplicates['Results'] = duplicates.apply(lambda x: perc_vote.loc[(x['Target'], x['Year'])]['Result'], axis=1)
 
     # Deal with duplicates that have different years
     correct_year = pd.DataFrame({'Year': duplicates.Date.dt.year, 'Target': duplicates.Target})
@@ -113,7 +114,7 @@ def handle_inconsistencies(df):
     df = pd.concat([df, duplicates]).sort_index()
 
     # Deal with duplicates that have different Vote
-    double_vote = df[df.duplicated(['Source', 'Target', 'Comment', 'Date'], keep=False) & df.Date.notnull() & (df.Vote == '0')]
+    double_vote = df[df.duplicated(['Source', 'Target', 'Comment', 'Date'], keep=False) & df.Date.notnull() & (df.Vote == 0)]
     # Drop the double_vote rows
     df.drop(double_vote.index, inplace=True)
 
@@ -156,12 +157,16 @@ def get_timeserie_df(df):
     voting_time = (df.groupby('Target').Date.apply(lambda x: x - x.min()).dt.total_seconds()/3600).rename('Voting_time')
     
     # Find the local minima of the kernel density estimation of the voting time
-    kde = np.histogram(voting_time, bins=100, density=True)
-    deriv_kde_sign = np.sign(np.diff(kde[1]))
-    local_mins = kde[0][np.append((np.roll(deriv_kde_sign, 1) - deriv_kde_sign) != 0, False)]
-    y_mins = kde[1][np.append((np.roll(deriv_kde_sign, 1) - deriv_kde_sign) != 0, False)]
-    # only keep the minima with a y value < 0.1 and a x value is between 10 and 1e4
-    round_threshold = local_mins[(y_mins < 0.1) & (local_mins > 10) & (local_mins < 1e3)][0]
+    lower_bound = 100
+    upper_bound = 1000
+    log_voting_time = np.log10(voting_time[(voting_time > lower_bound) & (voting_time < upper_bound)])
+    kde = KernelDensity(kernel='gaussian', bandwidth=0.1).fit(log_voting_time.values.reshape(-1, 1))
+    kde_x = np.linspace(np.min(log_voting_time), np.max(log_voting_time), 1000)
+    kde_y = np.exp(kde.score_samples(kde_x.reshape(-1, 1)))
+    deriv_kde_sign = np.sign(np.diff(kde_y))
+    local_mins = kde_x[np.append((np.roll(deriv_kde_sign, 1) - deriv_kde_sign) != 0, False)]
+    y_mins = kde_y[np.append((np.roll(deriv_kde_sign, 1) - deriv_kde_sign) != 0, False)]
+    round_threshold = local_mins[(y_mins < 0.1)][0]
 
     # Create a new dataframe completing the original dataframe with the voting time
     df_timeserie = df.join(voting_time.droplevel(0))
