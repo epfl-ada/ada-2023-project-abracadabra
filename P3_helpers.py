@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 from sklearn.neighbors import KernelDensity
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -222,3 +224,81 @@ def compute_rounds(data, round_threshold):
             
     rounds = pd.Series(rounds, index=data.index).astype(int)
     return rounds
+
+
+########## VOTE EVOLUTION FUNCTIONS ##########
+def get_progressive_mean(df):
+    """ Compute the progressive mean of the votes in each round (i.e. the mean of the votes at each time step)
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+        
+    Returns:
+        df (pd.DataFrame): Dataframe containing the data of the votes with the progressive mean of the votes in each round
+    """
+    # Compute the progressive mean of the votes in each round (i.e. the mean of the votes at each time step)
+    progressive_mean = df.groupby(['Target', 'Round']).apply(lambda x: x.Vote.cumsum() / np.arange(1, len(x)+1)).rename('progressive_mean')
+    # Replace the column Vote by the progressive mean
+    df = df.join(progressive_mean.droplevel([0,1]))
+
+    #Convert time in timedelta
+    df.Voting_time = pd.to_timedelta(df.Voting_time, unit='h')
+    df.sort_values('Voting_time', inplace=True)
+
+    return df
+
+def plot_vote_evolution(data, mean_col = 'center', var_cols = ['lower', 'upper']):
+    """ Plot the evolution of the votes for a given target and a given round of election
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+        target (str): Name of the target
+        round_number (int): Round number of the election
+        
+    Returns:
+        ax (matplotlib.axes._subplots.AxesSubplot): Plot of the evolution of the votes for a given target and a given round of election
+    """
+    # Plot the evolution of the votes
+    plt.figure(figsize=(15, 5))
+    data[data.Results == 1]
+    sns.lineplot(x='Voting_time', y=mean_col, data=data, hue='Results', palette='tab10')
+    plt.fill_between(data[data.Results == -1].Voting_time, data[data.Results == -1][var_cols[0]], data[data.Results == -1][var_cols[1]], alpha=0.2, color='tab:blue')
+    plt.fill_between(data[data.Results == 1].Voting_time, data[data.Results == 1][var_cols[0]], data[data.Results == 1][var_cols[1]], alpha=0.2, color='tab:orange')
+    plt.legend(loc='upper left')
+    plt.xlabel('Time (hours)')
+    plt.ylabel('Progressive mean of the votes')
+    plt.xlim(0, 24*8)
+    plt.ylim(-1, 1.01)
+    return plt.gca()
+    
+def rolling_average(data, window_size='2h'):
+    """ Compute the rolling average of the votes in each round (i.e. the mean of the votes in a given time window)
+
+    Args:
+        data (pd.DataFrame): Dataframe containing the data of the votes
+        window_size (str): Size of the time window
+        
+    Returns:
+        data (pd.DataFrame): Dataframe containing the data of the votes with the rolling average of the votes in each round
+    """
+    # Sort by voting time and compute moving average of each column 
+    data = data.sort_values('Voting_time').reset_index()
+    data = data.groupby('Results').rolling(window_size, on='Voting_time', min_periods=1).mean().reset_index(level='Results')
+    data.Voting_time = time_to_float(data.Voting_time)
+    data.columns = ['Results', 'Voting_time', 'lower', 'center', 'upper']
+    return data
+
+def time_to_float(voting_time):
+    """ Convert a time in the format hh:mm:ss to a float number of hours
+
+    Args:
+        voting_time (pd.Series): Series of 'Voting_time' in timedelta format
+
+    Returns:
+        voting_time (pd.Series): Series containing the column 'Voting_time' in float format
+    """
+    voting_time = voting_time.dt.total_seconds() / 3600
+    return voting_time
+
+
+
