@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.neighbors import KernelDensity
 import seaborn as sns
 import matplotlib.pyplot as plt
+import scipy.stats as stats
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -247,13 +248,14 @@ def get_progressive_mean(df):
 
     return df
 
-def plot_vote_evolution(data, mean_col = 'center', var_cols = ['lower', 'upper']):
+def plot_vote_evolution(data, x, mean_col = 'center', var_cols = ['lower', 'upper']):
     """ Plot the evolution of the votes for a given target and a given round of election
 
     Args:
-        df (pd.DataFrame): Dataframe containing the data of the votes
-        target (str): Name of the target
-        round_number (int): Round number of the election
+        data (pd.DataFrame): Dataframe containing the data of the votes
+        x (str): Name of the column to use as x-axis
+        mean_col (str): Name of the column to use as mean
+        var_cols (list): List of the names of the columns to use as variance
         
     Returns:
         ax (matplotlib.axes._subplots.AxesSubplot): Plot of the evolution of the votes for a given target and a given round of election
@@ -261,9 +263,9 @@ def plot_vote_evolution(data, mean_col = 'center', var_cols = ['lower', 'upper']
     # Plot the evolution of the votes
     plt.figure(figsize=(15, 5))
     data[data.Results == 1]
-    sns.lineplot(x='Voting_time', y=mean_col, data=data, hue='Results', palette='tab10')
-    plt.fill_between(data[data.Results == -1].Voting_time, data[data.Results == -1][var_cols[0]], data[data.Results == -1][var_cols[1]], alpha=0.2, color='tab:blue')
-    plt.fill_between(data[data.Results == 1].Voting_time, data[data.Results == 1][var_cols[0]], data[data.Results == 1][var_cols[1]], alpha=0.2, color='tab:orange')
+    sns.lineplot(x=x, y=mean_col, data=data, hue='Results', palette='tab10')
+    plt.fill_between(data[data.Results == -1][x], data[data.Results == -1][var_cols[0]], data[data.Results == -1][var_cols[1]], alpha=0.2, color='tab:blue')
+    plt.fill_between(data[data.Results == 1][x], data[data.Results == 1][var_cols[0]], data[data.Results == 1][var_cols[1]], alpha=0.2, color='tab:orange')
     plt.legend(loc='upper left')
     plt.xlabel('Time (hours)')
     plt.ylabel('Progressive mean of the votes')
@@ -271,7 +273,7 @@ def plot_vote_evolution(data, mean_col = 'center', var_cols = ['lower', 'upper']
     plt.ylim(-1, 1.01)
     return plt.gca()
     
-def rolling_average(data, window_size='2h'):
+def rolling_average(data, window_size='1h', on='Voting_time'):
     """ Compute the rolling average of the votes in each round (i.e. the mean of the votes in a given time window)
 
     Args:
@@ -281,9 +283,12 @@ def rolling_average(data, window_size='2h'):
     Returns:
         data (pd.DataFrame): Dataframe containing the data of the votes with the rolling average of the votes in each round
     """
-    # Sort by voting time and compute moving average of each column 
-    data = data.sort_values('Voting_time').reset_index()
-    data = data.groupby('Results').rolling(window_size, on='Voting_time', min_periods=1).mean().reset_index(level='Results')
+    # Sort and compute moving average of each column 
+    if on is None:
+        data = data.sort_index().reset_index()
+    else:
+        data = data.sort_values(on).reset_index()
+    data = data.groupby('Results').rolling(window_size, on=on, min_periods=1).mean().reset_index(level='Results')
     data.Voting_time = time_to_float(data.Voting_time)
     data.columns = ['Results', 'Voting_time', 'lower', 'center', 'upper']
     return data
@@ -300,5 +305,32 @@ def time_to_float(voting_time):
     voting_time = voting_time.dt.total_seconds() / 3600
     return voting_time
 
+def get_quartiles(grouper):
+    """ Compute the median, first and last quartile of the votes in each round
 
+    Args:
+        grouper (pd.SeriesGroupBy): Groupby object containing the data of the votes 
+        
+    Returns:
+        quartiles (pd.DataFrame): Dataframe containing the median, first and last quartile of the votes in each round
+    """
+    # Compute the median, first and last quartile of the votes in each round
+    quartiles = grouper.quantile([0.25, 0.5, 0.75]).unstack(level=2).reset_index()
+    quartiles.rename(columns={0.25: 'lower', 0.5: 'center', 0.75: 'upper'}, inplace=True)
+    return quartiles
 
+def get_confidence_interval(grouper):
+    """ Compute the mean and 95% confidence interval of the votes in each round
+
+    Args:
+        grouper (pd.SeriesGroupBy): Groupby object containing the data of the votes        
+    
+    Returns:
+        ci (pd.DataFrame): Dataframe containing the mean and 95% confidence interval of the votes in each round
+    """
+    # Compute the mean and 95% confidence interval of the votes in each round
+    ci = grouper.agg(['mean', stats.sem]).reset_index()
+    ci['lower'] = ci['mean'] - 1.96 * ci['sem']
+    ci['upper'] = ci['mean'] + 1.96 * ci['sem']
+    ci.rename(columns={'mean': 'center'}, inplace=True)
+    return ci
