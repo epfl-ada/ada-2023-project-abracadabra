@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import scipy.stats as stats
 
 import mwparserfromhell
-import nltk 
 from nltk.tokenize import word_tokenize
 from gensim import corpora, models
 from gensim.parsing.preprocessing import STOPWORDS
@@ -244,7 +243,7 @@ def get_progressive_mean(df):
         df (pd.DataFrame): Dataframe containing the data of the votes with the progressive mean of the votes in each round
     """
     # Compute the progressive mean of the votes in each round (i.e. the mean of the votes at each time step)
-    progressive_mean = df.groupby(['Target', 'Round']).apply(lambda x: x.Vote.cumsum() / np.arange(1, len(x)+1)).rename('progressive_mean')
+    progressive_mean = df.groupby(['Target', 'Round']).apply(lambda x: x.sort_values('Voting_time').Vote.cumsum() / np.arange(1, len(x)+1)).rename('progressive_mean')
     # Replace the column Vote by the progressive mean
     df = df.join(progressive_mean.droplevel([0,1]))
 
@@ -268,15 +267,18 @@ def plot_vote_evolution(data, x, mean_col = 'center', var_cols = ['lower', 'uppe
     """
     # Plot the evolution of the votes
     plt.figure(figsize=(15, 5))
-    data[data.Results == 1]
     sns.lineplot(x=x, y=mean_col, data=data, hue='Results', palette='tab10')
     plt.fill_between(data[data.Results == -1][x], data[data.Results == -1][var_cols[0]], data[data.Results == -1][var_cols[1]], alpha=0.2, color='tab:blue')
     plt.fill_between(data[data.Results == 1][x], data[data.Results == 1][var_cols[0]], data[data.Results == 1][var_cols[1]], alpha=0.2, color='tab:orange')
     plt.legend(loc='upper left')
-    plt.xlabel('Time (hours)')
+    if x == 'Voting_time': plt.xlabel('Time (days)')
+    elif x == 'rank': plt.xlabel('Number of votes')
     plt.ylabel('Progressive mean of the votes')
     plt.xlim(0, 24*8)
     plt.ylim(-1, 1.01)
+    # Manually create legend 
+    plt.legend(handles=[plt.Line2D([0], [0], color='tab:blue', lw=4, label='Rejected'),
+                        plt.Line2D([0], [0], color='tab:orange', lw=4, label='Elected')])
     return plt.gca()
     
 def rolling_average(data, window_size='1h', on='Voting_time'):
