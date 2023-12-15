@@ -156,7 +156,7 @@ def get_timeserie_df(df):
         df_timeserie (pd.DataFrame): Dataframe containing the data of the votes with the voting time and the election round
     """
     # Remove the 2003 election round that represents only 0.1% of the data and which voting time behavior is different from the other rounds
-    df = df[df['Year'] != '2003'] # or df = df[df['Year'] != 2003]
+    df = df[df['Year'] != 2003] # or df = df[df['Year'] != '2003']
 
     # Remove NaN values in the date column
     df = df[~df['Date'].isna()]
@@ -180,13 +180,14 @@ def get_timeserie_df(df):
     df_timeserie = df.join(voting_time.droplevel(0))
 
     # Compute the round number of each vote
-    rounds = (df_timeserie.groupby('Target').apply(lambda x: compute_rounds(x, round_threshold))).rename('Round')
+    rounds = df_timeserie.groupby('Target').apply(lambda x: compute_rounds(x, round_threshold)).rename('Round')
     df_timeserie = df_timeserie.join(rounds.droplevel(0))
 
-    # Use the round number to compute the voting time in each round (i.e. the time between the current vote and the first vote of the round)
+    # Use the round number to compute the voting time and the vote number in each round (i.e. the time between the current vote and the first vote of the round)
     Voting_time_round = df_timeserie.groupby(['Target', 'Round']).Voting_time.apply(lambda x: x - x.min())
-    # Replace the column Voting_time by the voting time in each round
     df_timeserie = df_timeserie.drop(columns='Voting_time').join(Voting_time_round.droplevel([0,1]))
+    Vote_number_round = (df_timeserie.sort_values('Voting_time').groupby(['Target', 'Round']).cumcount() + 1).rename('Vote_number')
+    df_timeserie = df_timeserie.join(Vote_number_round)
 
     return df_timeserie
 
@@ -244,7 +245,6 @@ def get_progressive_mean(df):
     """
     # Compute the progressive mean of the votes in each round (i.e. the mean of the votes at each time step)
     progressive_mean = df.groupby(['Target', 'Round']).apply(lambda x: x.sort_values('Voting_time').Vote.cumsum() / np.arange(1, len(x)+1)).rename('progressive_mean')
-    # Replace the column Vote by the progressive mean
     df = df.join(progressive_mean.droplevel([0,1]))
 
     #Convert time in timedelta
@@ -266,20 +266,18 @@ def plot_vote_evolution(data, x, mean_col = 'center', var_cols = ['lower', 'uppe
         ax (matplotlib.axes._subplots.AxesSubplot): Plot of the evolution of the votes for a given target and a given round of election
     """
     # Plot the evolution of the votes
-    plt.figure(figsize=(15, 5))
-    sns.lineplot(x=x, y=mean_col, data=data, hue='Results', palette='tab10')
-    plt.fill_between(data[data.Results == -1][x], data[data.Results == -1][var_cols[0]], data[data.Results == -1][var_cols[1]], alpha=0.2, color='tab:blue')
-    plt.fill_between(data[data.Results == 1][x], data[data.Results == 1][var_cols[0]], data[data.Results == 1][var_cols[1]], alpha=0.2, color='tab:orange')
-    plt.legend(loc='upper left')
-    if x == 'Voting_time': plt.xlabel('Time (days)')
-    elif x == 'rank': plt.xlabel('Number of votes')
-    plt.ylabel('Progressive mean of the votes')
-    plt.xlim(0, 24*8)
-    plt.ylim(-1, 1.01)
-    # Manually create legend 
-    plt.legend(handles=[plt.Line2D([0], [0], color='tab:blue', lw=4, label='Rejected'),
+    fig, ax = plt.subplots(figsize=(12, 5))
+    sns.lineplot(x=x, y=mean_col, data=data, hue='Results', palette='tab10', ax=ax)
+    ax.fill_between(data[data.Results == -1][x], data[data.Results == -1][var_cols[0]], data[data.Results == -1][var_cols[1]], alpha=0.2, color='tab:blue')
+    ax.fill_between(data[data.Results == 1][x], data[data.Results == 1][var_cols[0]], data[data.Results == 1][var_cols[1]], alpha=0.2, color='tab:orange')
+    ax.set_xlim(0, 24*8)
+    ax.set_ylim(-1, 1.01)
+    ax.set_ylabel('Progressive mean of the votes')
+    if x == 'Voting_time': ax.set_xlabel('Time (days)')
+    elif x == 'Vote_number': ax.set_xlabel('Number of votes')
+    ax.legend(handles=[plt.Line2D([0], [0], color='tab:blue', lw=4, label='Rejected'),
                         plt.Line2D([0], [0], color='tab:orange', lw=4, label='Elected')])
-    return plt.gca()
+    return ax
     
 def rolling_average(data, window_size='1h', on='Voting_time'):
     """ Compute the rolling average of the votes in each round (i.e. the mean of the votes in a given time window)
