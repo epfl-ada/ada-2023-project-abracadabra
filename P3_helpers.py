@@ -9,6 +9,9 @@ import mwparserfromhell
 from nltk.tokenize import word_tokenize
 from gensim import corpora, models
 from gensim.parsing.preprocessing import STOPWORDS
+STOPWORDS = list(STOPWORDS)
+from string import punctuation as PUNCTUATION
+FINE_TUNE_STOPWORDS = ["--", "n\'t", "\'s", "\'\'", "font", "``", "color=", "style=", "span", "s", "\'m"]
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -355,9 +358,14 @@ def tokenize_comments(comments_series):
 def get_dict_representation(tokenized_comments):
     return corpora.Dictionary(tokenized_comments)
 
-def remove_stopwords_from_dict(dictionary):
-    dictionary.filter_tokens(bad_ids=[dictionary.token2id[word] for word in STOPWORDS])
-    return dictionary
+def remove_stopwords(tokenized_comments):
+    return [[word for word in comment if word not in STOPWORDS] for comment in tokenized_comments]
+
+def remove_ponctuation(tokenized_comments):
+    return [[word for word in comment if word not in PUNCTUATION] for comment in tokenized_comments]
+
+def remove_fine_tune_stopwords(tokenized_comments):
+    return [[word for word in comment if word not in FINE_TUNE_STOPWORDS] for comment in tokenized_comments]
 
 def get_bow_representation(tokenized_comments, dictionary):
     return [dictionary.doc2bow(comment) for comment in tokenized_comments]
@@ -368,10 +376,15 @@ def init_LDA_model(bow_corpus, dictionary, num_topics=3, passes=10):
 def get_LDA_topics(lda_model, num_words=10):
     return lda_model.print_topics(num_words=num_words)
 
-def get_LDA_topics_pipeline(comments_series, num_topics=3, num_words=10, passes=10):
+def get_LDA_topics_pipeline(comments_series, num_topics=3, num_words=10, passes=10, stopwords=False, ponctuation=False, fine_tune_stopwords=False):
     tokenized_comments = tokenize_comments(comments_series)
+    if stopwords:
+        tokenized_comments = remove_stopwords(tokenized_comments)
+    if ponctuation:
+        tokenized_comments = remove_ponctuation(tokenized_comments)
+    if fine_tune_stopwords:
+        tokenized_comments = remove_fine_tune_stopwords(tokenized_comments)
     dictionary = get_dict_representation(tokenized_comments)
-    dictionary.filter_tokens(bad_ids=[dictionary.token2id[word] for word in STOPWORDS])
     bow_corpus = get_bow_representation(tokenized_comments, dictionary)
     lda_model = init_LDA_model(bow_corpus, dictionary, num_topics=num_topics, passes=passes)
     return get_LDA_topics(lda_model, num_words=num_words)
