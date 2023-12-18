@@ -16,7 +16,8 @@ FINE_TUNE_STOPWORDS = ["--", "n\'t", "\'s", "\'\'", "font", "``", "color=", "sty
 import warnings
 warnings.filterwarnings('ignore')
 
-
+import networkx as nx
+import community
 
 ########## DATA HANDLING FUNCTIONS ##########
 
@@ -408,3 +409,55 @@ def get_LDA_model(comments_series, num_topics=3, passes=10, stopwords=True, ponc
     bow_corpus = get_bow_representation(tokenized_comments, dictionary)
     lda_model = init_LDA_model(bow_corpus, dictionary, num_topics=num_topics, passes=passes)
     return lda_model
+
+################### Community on bipartite graph #####################
+
+def create_bipartite_weight(sources, targets, weights):
+    #create bipartite graph
+    G = nx.Graph()
+    for i in range (len(sources)):
+        G.add_node(sources[i], bipartite=0)
+        G.add_node(targets[i], bipartite=1)
+        G.add_edge(sources[i], targets[i], weight=weights[i])
+    return G
+
+def create_bipartite_weight_from_df(df):
+    #Extract source, target, weight
+    sources = list(df['Source'])
+    targets = list(df['Target'])
+    weights = list(df['Vote']) 
+
+    # A lot of target become source during the year, we want to gather only sources and then we don't want to take into account the connection a target, which became source,
+    # has with sources when it was not yet elected as source
+    #Change the name so that it does not happen
+    sources= [source + '-source' for source in sources]
+
+    G = create_bipartite_weight(sources, targets, weights)
+
+    return G
+
+def shared_neighbors_count(G, u, v):
+    #Check if nodes u and v belong to the same side of the bipartite graph
+    if G.nodes[u]['bipartite'] != G.nodes[v]['bipartite']:
+        raise ValueError("Nodes should belong to the same side of the bipartite graph.")
+
+    #Select the other part of the graph
+    other_side = 1 - G.nodes[u]['bipartite']
+
+    #u and v neighbor from the othe rpart of the graph
+    neighbors_u = set(n for n in G.neighbors(u) if G.nodes[n]['bipartite'] == other_side)
+    neighbors_v = set(n for n in G.neighbors(v) if G.nodes[n]['bipartite'] == other_side)
+
+    # Compute shared neighbor with the same weight
+    shared_neighbors = neighbors_u.intersection(neighbors_v)
+
+    return len(shared_neighbors)
+
+def projected_weighted_bipartite(G, source):
+    #give the projection of the bipartite weighted graph G on source
+    return nx.algorithms.bipartite.generic_weighted_projected_graph(G, source, weight_function=shared_neighbors_count)
+
+def extract_community_from_projected_graph(projected_G):
+    com_dict = community.best_partition(projected_G)
+    df_com = pd.DataFrame(list(com_dict.items()), columns=['Source', 'Community'])
+    return df_com
