@@ -6,15 +6,18 @@ import matplotlib.pyplot as plt
 import scipy.stats as stats
 
 import mwparserfromhell
-import nltk 
 from nltk.tokenize import word_tokenize
 from gensim import corpora, models
 from gensim.parsing.preprocessing import STOPWORDS
+STOPWORDS = list(STOPWORDS)
+from string import punctuation as PUNCTUATION
+FINE_TUNE_STOPWORDS = ["--", "n\'t", "\'s", "\'\'", "font", "``", "color=", "style=", "span", "s", "\'m"]
 
 import warnings
 warnings.filterwarnings('ignore')
 
-
+import networkx as nx
+import community
 
 ########## DATA HANDLING FUNCTIONS ##########
 
@@ -157,7 +160,7 @@ def get_timeserie_df(df):
         df_timeserie (pd.DataFrame): Dataframe containing the data of the votes with the voting time and the election round
     """
     # Remove the 2003 election round that represents only 0.1% of the data and which voting time behavior is different from the other rounds
-    df = df[df['Year'] != '2003'] # or df = df[df['Year'] != 2003]
+    df = df[df['Year'] != 2003] # or df = df[df['Year'] != '2003']
 
     # Remove NaN values in the date column
     df = df[~df['Date'].isna()]
@@ -181,13 +184,14 @@ def get_timeserie_df(df):
     df_timeserie = df.join(voting_time.droplevel(0))
 
     # Compute the round number of each vote
-    rounds = (df_timeserie.groupby('Target').apply(lambda x: compute_rounds(x, round_threshold))).rename('Round')
+    rounds = df_timeserie.groupby('Target').apply(lambda x: compute_rounds(x, round_threshold)).rename('Round')
     df_timeserie = df_timeserie.join(rounds.droplevel(0))
 
-    # Use the round number to compute the voting time in each round (i.e. the time between the current vote and the first vote of the round)
+    # Use the round number to compute the voting time and the vote number in each round (i.e. the time between the current vote and the first vote of the round)
     Voting_time_round = df_timeserie.groupby(['Target', 'Round']).Voting_time.apply(lambda x: x - x.min())
-    # Replace the column Voting_time by the voting time in each round
     df_timeserie = df_timeserie.drop(columns='Voting_time').join(Voting_time_round.droplevel([0,1]))
+    Vote_number_round = (df_timeserie.sort_values('Voting_time').groupby(['Target', 'Round']).cumcount() + 1).rename('Vote_number')
+    df_timeserie = df_timeserie.join(Vote_number_round)
 
     return df_timeserie
 
@@ -244,8 +248,7 @@ def get_progressive_mean(df):
         df (pd.DataFrame): Dataframe containing the data of the votes with the progressive mean of the votes in each round
     """
     # Compute the progressive mean of the votes in each round (i.e. the mean of the votes at each time step)
-    progressive_mean = df.groupby(['Target', 'Round']).apply(lambda x: x.Vote.cumsum() / np.arange(1, len(x)+1)).rename('progressive_mean')
-    # Replace the column Vote by the progressive mean
+    progressive_mean = df.groupby(['Target', 'Round']).apply(lambda x: x.sort_values('Voting_time').Vote.cumsum() / np.arange(1, len(x)+1)).rename('progressive_mean')
     df = df.join(progressive_mean.droplevel([0,1]))
 
     #Convert time in timedelta
@@ -267,17 +270,18 @@ def plot_vote_evolution(data, x, mean_col = 'center', var_cols = ['lower', 'uppe
         ax (matplotlib.axes._subplots.AxesSubplot): Plot of the evolution of the votes for a given target and a given round of election
     """
     # Plot the evolution of the votes
-    plt.figure(figsize=(15, 5))
-    data[data.Results == 1]
-    sns.lineplot(x=x, y=mean_col, data=data, hue='Results', palette='tab10')
-    plt.fill_between(data[data.Results == -1][x], data[data.Results == -1][var_cols[0]], data[data.Results == -1][var_cols[1]], alpha=0.2, color='tab:blue')
-    plt.fill_between(data[data.Results == 1][x], data[data.Results == 1][var_cols[0]], data[data.Results == 1][var_cols[1]], alpha=0.2, color='tab:orange')
-    plt.legend(loc='upper left')
-    plt.xlabel('Time (hours)')
-    plt.ylabel('Progressive mean of the votes')
-    plt.xlim(0, 24*8)
-    plt.ylim(-1, 1.01)
-    return plt.gca()
+    fig, ax = plt.subplots(figsize=(12, 5))
+    sns.lineplot(x=x, y=mean_col, data=data, hue='Results', palette='tab10', ax=ax)
+    ax.fill_between(data[data.Results == -1][x], data[data.Results == -1][var_cols[0]], data[data.Results == -1][var_cols[1]], alpha=0.2, color='tab:blue')
+    ax.fill_between(data[data.Results == 1][x], data[data.Results == 1][var_cols[0]], data[data.Results == 1][var_cols[1]], alpha=0.2, color='tab:orange')
+    ax.set_xlim(0, 24*8)
+    ax.set_ylim(-1, 1.01)
+    ax.set_ylabel('Progressive mean of the votes')
+    if x == 'Voting_time': ax.set_xlabel('Time (days)')
+    elif x == 'Vote_number': ax.set_xlabel('Number of votes')
+    ax.legend(handles=[plt.Line2D([0], [0], color='tab:blue', lw=4, label='Rejected'),
+                        plt.Line2D([0], [0], color='tab:orange', lw=4, label='Elected')])
+    return ax
     
 def rolling_average(data, window_size='1h', on='Voting_time'):
     """ Compute the rolling average of the votes in each round (i.e. the mean of the votes in a given time window)
@@ -348,16 +352,37 @@ def get_parsed_comment(comment):
     """ Parse a comment using mwparserfromhell and return the text of the comment"""
     return mwparserfromhell.parse(comment).strip_code()
 
-#Functions below are 
+#For DF
+def tokenize_one_comment(comment):
+    return word_tokenize(comment.lower())
+
+def get_bow_column(tokenized_column, stopwords=True, ponctuation=True, fine_tune_stopwords=True):
+    tokenized_comments = tokenized_column.tolist()
+    if stopwords:
+        tokenized_comments = remove_stopwords(tokenized_comments)
+    if ponctuation:
+        tokenized_comments = remove_ponctuation(tokenized_comments)
+    if fine_tune_stopwords:
+        tokenized_comments = remove_fine_tune_stopwords(tokenized_comments)
+    dictionary = get_dict_representation(tokenized_comments)
+    bow_corpus = get_bow_representation(tokenized_comments, dictionary)
+    return bow_corpus
+
+#For Pipeline
 def tokenize_comments(comments_series):
     return [word_tokenize(comment.lower()) for comment in comments_series.tolist()]
 
 def get_dict_representation(tokenized_comments):
     return corpora.Dictionary(tokenized_comments)
 
-def remove_stopwords_from_dict(dictionary):
-    dictionary.filter_tokens(bad_ids=[dictionary.token2id[word] for word in STOPWORDS])
-    return dictionary
+def remove_stopwords(tokenized_comments):
+    return [[word for word in comment if word not in STOPWORDS] for comment in tokenized_comments]
+
+def remove_ponctuation(tokenized_comments):
+    return [[word for word in comment if word not in PUNCTUATION] for comment in tokenized_comments]
+
+def remove_fine_tune_stopwords(tokenized_comments):
+    return [[word for word in comment if word not in FINE_TUNE_STOPWORDS] for comment in tokenized_comments]
 
 def get_bow_representation(tokenized_comments, dictionary):
     return [dictionary.doc2bow(comment) for comment in tokenized_comments]
@@ -365,13 +390,74 @@ def get_bow_representation(tokenized_comments, dictionary):
 def init_LDA_model(bow_corpus, dictionary, num_topics=3, passes=10):
     return models.LdaModel(bow_corpus, id2word=dictionary, num_topics=num_topics, passes=passes)
 
+def get_LDA_model_from_saved_file(path):
+    return models.LdaModel.load(path)
+
+#Not used
 def get_LDA_topics(lda_model, num_words=10):
     return lda_model.print_topics(num_words=num_words)
 
-def get_LDA_topics_pipeline(comments_series, num_topics=3, num_words=10, passes=10):
+def get_LDA_model(comments_series, num_topics=3, passes=10, stopwords=True, ponctuation=True, fine_tune_stopwords=True):
     tokenized_comments = tokenize_comments(comments_series)
+    if stopwords:
+        tokenized_comments = remove_stopwords(tokenized_comments)
+    if ponctuation:
+        tokenized_comments = remove_ponctuation(tokenized_comments)
+    if fine_tune_stopwords:
+        tokenized_comments = remove_fine_tune_stopwords(tokenized_comments)
     dictionary = get_dict_representation(tokenized_comments)
-    dictionary.filter_tokens(bad_ids=[dictionary.token2id[word] for word in STOPWORDS])
     bow_corpus = get_bow_representation(tokenized_comments, dictionary)
     lda_model = init_LDA_model(bow_corpus, dictionary, num_topics=num_topics, passes=passes)
-    return get_LDA_topics(lda_model, num_words=num_words)
+    return lda_model
+
+################### Community on bipartite graph #####################
+
+def create_bipartite_weight(sources, targets, weights):
+    #create bipartite graph
+    G = nx.Graph()
+    for i in range (len(sources)):
+        G.add_node(sources[i], bipartite=0)
+        G.add_node(targets[i], bipartite=1)
+        G.add_edge(sources[i], targets[i], weight=weights[i])
+    return G
+
+def create_bipartite_weight_from_df(df):
+    #Extract source, target, weight
+    sources = list(df['Source'])
+    targets = list(df['Target'])
+    weights = list(df['Vote']) 
+
+    # A lot of target become source during the year, we want to gather only sources and then we don't want to take into account the connection a target, which became source,
+    # has with sources when it was not yet elected as source
+    #Change the name so that it does not happen
+    sources= [source + '-source' for source in sources]
+
+    G = create_bipartite_weight(sources, targets, weights)
+
+    return G
+
+def shared_neighbors_count(G, u, v):
+    #Check if nodes u and v belong to the same side of the bipartite graph
+    if G.nodes[u]['bipartite'] != G.nodes[v]['bipartite']:
+        raise ValueError("Nodes should belong to the same side of the bipartite graph.")
+
+    #Select the other part of the graph
+    other_side = 1 - G.nodes[u]['bipartite']
+
+    #u and v neighbor from the othe rpart of the graph
+    neighbors_u = set(n for n in G.neighbors(u) if G.nodes[n]['bipartite'] == other_side)
+    neighbors_v = set(n for n in G.neighbors(v) if G.nodes[n]['bipartite'] == other_side)
+
+    # Compute shared neighbor with the same weight
+    shared_neighbors = neighbors_u.intersection(neighbors_v)
+
+    return len(shared_neighbors)
+
+def projected_weighted_bipartite(G, source):
+    #give the projection of the bipartite weighted graph G on source
+    return nx.algorithms.bipartite.generic_weighted_projected_graph(G, source, weight_function=shared_neighbors_count)
+
+def extract_community_from_projected_graph(projected_G):
+    com_dict = community.best_partition(projected_G)
+    df_com = pd.DataFrame(list(com_dict.items()), columns=['Source', 'Community'])
+    return df_com

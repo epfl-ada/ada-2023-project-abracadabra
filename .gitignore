@@ -11,3 +11,7 @@ cosine_sim.npy
 
 # remove all .csv files
 *.csv
+
+# remove lda model state dict
+lda_model_*
+nbTopics_*
