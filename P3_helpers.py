@@ -252,6 +252,7 @@ def pdf_voting_time(df):
     ax.set_title('Histogram of voting time')
     ax.set_xlabel('Voting time in the round (hours)')
     ax.set_ylabel('Percentage of votes')
+    ax.set_xlim(0, 24*8)
     plt.savefig('Figures/distribution_voting_time.png', dpi=300)
     plt.show()
 
@@ -262,6 +263,7 @@ def cdf_voting_time(df):
     ax.set_title('ECDF of voting time')
     ax.set_xlabel('Voting time in the round (hours)')
     ax.set_ylabel('Percentage of votes')
+    ax.set_xlim(0, 24*8)
     plt.savefig('Figures/cdf_voting_time.png', dpi=300)
     plt.show()
 
@@ -304,6 +306,7 @@ def plot_vote_evolution(data, x, mean_col = 'center', var_cols = ['lower', 'uppe
     ax.fill_between(data[data.Results == -1][x], data[data.Results == -1][var_cols[0]], data[data.Results == -1][var_cols[1]], alpha=0.2, color='tab:blue')
     ax.fill_between(data[data.Results == 1][x], data[data.Results == 1][var_cols[0]], data[data.Results == 1][var_cols[1]], alpha=0.2, color='tab:orange')
     ax.set_ylim(-1, 1.01)
+    ax.set_xlim(data[x].min(), data[x].max())
     ax.set_ylabel('Progressive mean of the votes')
     if x == 'Voting_time': 
         ax.set_xlabel('Time (hours)')
@@ -357,7 +360,7 @@ def add_voting_time(grouper, stats, on):
         stats (pd.DataFrame): Dataframe containing the stats of the votes in each round with the voting time in the right format
     """
     if on == 'Vote_number':
-        stats = stats.join(grouper.Voting_time.max(), on=['Results', on])
+        stats = stats.join(grouper.Voting_time.median(), on=['Results', on])
 
     stats.Voting_time = time_to_float(stats.Voting_time)
     return stats
@@ -396,7 +399,7 @@ def get_confidence_interval(grouper, on):
 
 # Scatter plot of the progressive mean by voting time and vote number
 def plot_time_distribution(df, x):
-    data = df[df.Voting_time < 8*24]
+    data = df[df.Voting_time < pd.Timedelta('8 days')]
     data.Voting_time = time_to_float(data.Voting_time)
     fig, axes = plt.subplots(1,2,figsize=(20, 6))
     # Plot the histogram in 2D with log scale colorbar
@@ -404,6 +407,8 @@ def plot_time_distribution(df, x):
     sns.histplot(data=data[data.Results==1], x=x, y='progressive_mean', ax=axes[1], color='tab:orange', cbar=True, norm=LogNorm(), vmin=None, vmax=None, bins=100)
     axes[0].set_ylim(-1.01, 1.01)
     axes[1].set_ylim(-1.01, 1.01)
+    axes[0].set_xlim(data[x].min(), data[x].max())
+    axes[1].set_xlim(data[x].min(), data[x].max())
     axes[0].set_ylabel('Progressive mean')
     axes[1].set_ylabel('Progressive mean')
     axes[0].set_title('Rejected targets')
