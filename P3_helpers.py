@@ -6,6 +6,10 @@ from matplotlib.colors import LogNorm
 import scipy.stats as stats
 from tqdm import tqdm
 
+import ast
+import json
+import os
+
 from sklearn.neighbors import KernelDensity
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import cross_validate
@@ -24,7 +28,6 @@ import community
 
 import warnings
 warnings.filterwarnings('ignore')
-
 
 ########## DATA HANDLING FUNCTIONS ##########
 
@@ -533,6 +536,7 @@ def get_LDA_model_from_saved_file(path):
 def get_LDA_topics(lda_model, num_words=10):
     return lda_model.print_topics(num_words=num_words)
 
+#Pipeline
 def get_LDA_model(comments_series, num_topics=3, passes=10, stopwords=True, ponctuation=True, fine_tune_stopwords=True):
     tokenized_comments = tokenize_comments(comments_series)
     if stopwords:
@@ -545,6 +549,85 @@ def get_LDA_model(comments_series, num_topics=3, passes=10, stopwords=True, ponc
     bow_corpus = get_bow_representation(tokenized_comments, dictionary)
     lda_model = init_LDA_model(bow_corpus, dictionary, num_topics=num_topics, passes=passes)
     return lda_model
+
+# Loading DF with topics
+def get_df_with_topics_from_csv(path='df_with_topics.csv'):
+    df = pd.read_csv(path)
+    #Parse the saved strings into lists
+    df['Topics_from_3'] = df['Topics_from_3'].apply(ast.literal_eval).apply(lambda x: sorted(x, key=lambda x: x[1], reverse=True))
+    df['Topics_from_5'] = df['Topics_from_5'].apply(ast.literal_eval).apply(lambda x: sorted(x, key=lambda x: x[1], reverse=True))
+    df['Topics_from_7'] = df['Topics_from_7'].apply(ast.literal_eval).apply(lambda x: sorted(x, key=lambda x: x[1], reverse=True))
+    df['Topics_from_9'] = df['Topics_from_9'].apply(ast.literal_eval).apply(lambda x: sorted(x, key=lambda x: x[1], reverse=True))
+    return df
+
+def get_stats_dict_from_df_with_topics(df, nb_topics, topic_positions):
+    stats_dict = {}
+
+    for from_topic in nb_topics:
+        for pos in topic_positions:
+            key = (from_topic, pos)
+            value = df.groupby(f'Topics_from_{from_topic}_{pos}_topic')[f'Topics_from_{from_topic}_{pos}_topic_prob'].agg(
+                                    count='count',  
+                                    mean='mean', 
+                                    std='std'
+                                ).reset_index()
+            value = value.rename(columns={f'Topics_from_{from_topic}_{pos}_topic': 'Topic', 
+                                                                    'mean': f'mean_prob_when_{pos}_pos',
+                                                                    'std': f'std_prob_when_{pos}_pos'})
+            total_number_of_comments = value['count'].sum()
+            value[f'prob_of_topic_to_be_{pos}'] = value['count'] / total_number_of_comments
+            stats_dict[key] = value
+
+    return stats_dict
+
+def parse_topic_str(s, threshold=None):
+    if threshold is None:
+        return [[pair.split("*")[1][1:-2], float(pair.split('*')[0])] for pair in s.split('+')]
+    else:
+        output = [[pair.split("*")[1][1:-2], float(pair.split('*')[0])] for pair in s.split('+')]
+        output = [pair for pair in output if pair[1] >= threshold]
+        return output
+
+def topic_dict_function(path_dir='./topic_dicts'):
+    topic_dict = {}
+    for filename in os.listdir(path_dir):
+        if 'description' not in filename:
+            with open(f'{path_dir}/{filename}', 'r') as f:
+                topic_dict['from_' + filename.split('_')[1]] = json.load(f)
+    for key, value in topic_dict.items():
+        for k, v in value.items():
+            topic_dict[key][k] = parse_topic_str(v, threshold=0.01)
+    return topic_dict
+
+
+def topic_str_plot(topic_dict):
+    topic_description_dict = {}
+    for model, themes_dict in topic_dict.items():
+        build = ''
+        counter = 0 
+        for theme, tuples_list in themes_dict.items():
+            build += f'Theme {theme}:'
+            for x,y in tuples_list:
+                build += f' {x} ({y:.4f}),'
+                counter += 1
+                if counter % 3 == 0:
+                    build += '\n'
+            build = build[:-1] + '\n\n'
+        topic_description_dict[model] = build[:-2]
+    return topic_description_dict
+
+def mappprob_from_list(x, pos_idx, topic_or_prob):
+    length_of_topics = len(x)
+    if length_of_topics <= pos_idx:
+        return np.nan
+    return x[pos_idx][topic_or_prob]
+
+def get_topic_stat(df_top_stat, nb_topics, topic_positions):
+    for t_number in nb_topics:
+        for i, pos in enumerate(topic_positions):
+            df_top_stat[f'Topics_from_{t_number}_'+pos+'_topic'] = df_top_stat[f'Topics_from_{t_number}'].apply(lambda x: mappprob_from_list(x, i, 0))
+            df_top_stat[f'Topics_from_{t_number}_'+pos+'_topic_prob'] = df_top_stat[f'Topics_from_{t_number}'].apply(lambda x: mappprob_from_list(x, i, 1))
+    return df_top_stat
 
 ################### Community on bipartite graph #####################
 
@@ -569,6 +652,24 @@ def create_bipartite_weight_from_df(df):
     sources= [source + '-source' for source in sources]
 
     G = create_bipartite_weight(sources, targets, weights)
+
+    return G
+
+def create_bipartite_weight_from_df_year(df, year):
+    #Take data from the year
+    df_year= df[df['Year']==year]
+
+    #Extract source, target, weight
+    sources_year = list(df_year['Source'])
+    targets_year = list(df_year['Target'])
+    weights_year = list(df_year['Vote']) 
+
+    # A lot of target become source during the year, we want to gather only sources and then we don't want to take into account the connection a target, which became source,
+    # has with sources when it was not yet elected as source
+    #Change the name so that it does not happen
+    sources_year = [source + '-source' for source in sources_year]
+
+    G = create_bipartite_weight(sources_year, targets_year, weights_year)
 
     return G
 
