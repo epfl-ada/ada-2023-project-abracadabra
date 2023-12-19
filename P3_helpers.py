@@ -17,6 +17,7 @@ from sklearn.model_selection import GroupKFold
 
 import mwparserfromhell
 from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
 from gensim import corpora, models
 from gensim.parsing.preprocessing import STOPWORDS
 STOPWORDS = list(STOPWORDS)
@@ -497,6 +498,7 @@ def tokenize_one_comment(comment):
 
 def get_bow_column(tokenized_column, stopwords=True, ponctuation=True, fine_tune_stopwords=True):
     tokenized_comments = tokenized_column.tolist()
+    tokenized_comments = lemmatize_comments(tokenized_comments)
     if stopwords:
         tokenized_comments = remove_stopwords(tokenized_comments)
     if ponctuation:
@@ -510,6 +512,14 @@ def get_bow_column(tokenized_column, stopwords=True, ponctuation=True, fine_tune
 #For Pipeline
 def tokenize_comments(comments_series):
     return [word_tokenize(comment.lower()) for comment in comments_series.tolist()]
+
+def lemmatize_comments(tokenized_comments):
+    lemmatizer = WordNetLemmatizer()
+    outputs = []
+    for comment in tokenized_comments:
+        out = [lemmatizer.lemmatize(token) for token in comment]
+        outputs.append(out)
+    return outputs
 
 def get_dict_representation(tokenized_comments):
     return corpora.Dictionary(tokenized_comments)
@@ -537,8 +547,13 @@ def get_LDA_topics(lda_model, num_words=10):
     return lda_model.print_topics(num_words=num_words)
 
 #Pipeline
-def get_LDA_model(comments_series, num_topics=3, passes=10, stopwords=True, ponctuation=True, fine_tune_stopwords=True):
+def get_LDA_model(comments_series, num_topics=3, passes=10,
+                  stopwords=True, ponctuation=True, fine_tune_stopwords=True,
+                  lemmatize=False):
+    
     tokenized_comments = tokenize_comments(comments_series)
+    if lemmatize:
+        tokenized_comments = lemmatize_comments(tokenized_comments)
     if stopwords:
         tokenized_comments = remove_stopwords(tokenized_comments)
     if ponctuation:
