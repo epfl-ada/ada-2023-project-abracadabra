@@ -644,6 +644,29 @@ def get_topic_stat(df_top_stat, nb_topics, topic_positions):
             df_top_stat[f'Topics_from_{t_number}_'+pos+'_topic_prob'] = df_top_stat[f'Topics_from_{t_number}'].apply(lambda x: mappprob_from_list(x, i, 1))
     return df_top_stat
 
+def load_communities_dict_for_topic(path_dir='./community_anal_dfs/'):
+    community_dict = {}
+    for filename in os.listdir(path_dir):
+        df = pd.read_csv(path_dir + filename)
+        df.Source = df.Source.apply(lambda x: x.split('-')[0])
+        community_dict[filename[-8:-4]] = df    
+    return community_dict
+
+def join_left_com_top(df_with_top_lem, communities_dcit):
+    output_dict= {}
+    for key, value in communities_dcit.items():
+        df_to_merge = df_with_top_lem[df_with_top_lem['Year']==int(key)]
+        df_merged = pd.merge(df_to_merge, value, how='left', on='Source')
+        df_merged = df_merged[~df_merged.Community.isnull()]
+        cur_communities = df_merged.Community.unique()
+        output_dict[key] = {}
+        for com in cur_communities:
+            temp = df_merged[df_merged.Community == com]
+            output_dict[key][com] = temp[['Source', 'BoW', 'Topics_from_3',
+                                               'Topics_from_5', 'Topics_from_7',
+                                               'Topics_from_9']]
+    return output_dict
+
 ################### Community on bipartite graph #####################
 
 def create_bipartite_weight(sources, targets, weights):
