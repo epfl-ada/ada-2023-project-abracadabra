@@ -644,6 +644,8 @@ def get_topic_stat(df_top_stat, nb_topics, topic_positions):
             df_top_stat[f'Topics_from_{t_number}_'+pos+'_topic_prob'] = df_top_stat[f'Topics_from_{t_number}'].apply(lambda x: mappprob_from_list(x, i, 1))
     return df_top_stat
 
+################### Community Analysis Functions #####################
+
 def load_communities_dict_for_topic(path_dir='./community_anal_dfs/'):
     community_dict = {}
     for filename in os.listdir(path_dir):
@@ -666,6 +668,58 @@ def join_left_com_top(df_with_top_lem, communities_dcit):
                                                'Topics_from_5', 'Topics_from_7',
                                                'Topics_from_9']]
     return output_dict
+
+def get_src_sets_from_com_dict(com_dict):
+    src_sets_dict = {}
+    for year, df in com_dict.items():
+        commu_possible = df.Community.unique()
+        src_sets_dict[year] = {}
+        for cur_commu in commu_possible:
+            src_sets_dict[year][cur_commu] = set(df[df.Community == cur_commu].Source)
+    return src_sets_dict
+
+def jacquard_similarity(src_sets_dict, year1, year2):
+    src_sets1 = src_sets_dict[year1]
+    src_sets2 = src_sets_dict[year2]
+    jacquard_sim = {}
+    jacquard_sim_this_year = {}
+    for com1, src_set1 in src_sets1.items():
+        jacquard_sim_this_year[com1] = {}
+        for com2, src_set2 in src_sets2.items():
+            jacquard_sim_this_year[com1][com2] = len(src_set1.intersection(src_set2)) / len(src_set1.union(src_set2))
+    jacquard_sim.update(jacquard_sim_this_year)
+    return jacquard_sim
+
+def jacquard_similarity_for_all_years(src_sets_by_comu_by_year, years_list):
+    jacquard_similarities = {}
+    for i,year in enumerate(years_list):
+        year = int(year) 
+        if i < len(years_list)-1:
+            jacquard_similarities[f"{year}-{year+1}"] = jacquard_similarity(src_sets_by_comu_by_year, str(year), str(year+1))
+    return jacquard_similarities
+
+def max_jacquard_sim(jacquard_similarities):
+    max_sim = {}
+    for year, sim_dict in jacquard_similarities.items():
+        max_sim[year] = {}
+        for com1, sim_dict in sim_dict.items():
+            key_max, value_max = max(sim_dict.items(), key=lambda x: x[1])
+            max_sim[year][com1] = (key_max, round(value_max,3))
+    return max_sim
+
+def edge_format_for_jsim(max_sim):
+    ... 
+
+def get_directed_graph_for_jsim(network):
+    G = nx.DiGraph()
+    for layer, connections in network.items():
+        for node, (next_node, weight) in connections.items():
+            G.add_edge((layer.split('-')[0], node), (layer.split('-')[1], next_node), weight=weight)
+    return G
+
+def plot_graph_jsim(G):
+    
+    return
 
 ################### Community on bipartite graph #####################
 
