@@ -1,26 +1,34 @@
 import numpy as np
 import pandas as pd
-from sklearn.neighbors import KernelDensity
 import seaborn as sns
 import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
 import scipy.stats as stats
+from tqdm import tqdm
+
+import ast
+import json
+import os
+
+from sklearn.neighbors import KernelDensity
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.model_selection import cross_validate
+from sklearn.model_selection import GroupKFold
 
 import mwparserfromhell
 from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
 from gensim import corpora, models
 from gensim.parsing.preprocessing import STOPWORDS
 STOPWORDS = list(STOPWORDS)
 from string import punctuation as PUNCTUATION
 FINE_TUNE_STOPWORDS = ["--", "n\'t", "\'s", "\'\'", "font", "``", "color=", "style=", "span", "s", "\'m"]
 
-import ast
-import json
-import os
+import networkx as nx
+import community
 
 import warnings
 warnings.filterwarnings('ignore')
-
-
 
 ########## DATA HANDLING FUNCTIONS ##########
 
@@ -241,6 +249,29 @@ def compute_rounds(data, round_threshold):
 
 
 ########## VOTE EVOLUTION FUNCTIONS ##########
+def pdf_voting_time(df):
+    data = df[(df['Voting_time'] != 0) & (df['Voting_time'] < 24*8)]
+    fig, ax = plt.subplots(figsize=(10,4))
+    sns.histplot(data=data, x='Voting_time', ax=ax, bins=100, stat='percent', log_scale=(False, False), hue='Year', palette='tab10', multiple='stack')
+    ax.set_title('Histogram of voting time')
+    ax.set_xlabel('Voting time in the round (hours)')
+    ax.set_ylabel('Percentage of votes')
+    ax.set_xlim(0, 24*8)
+    plt.savefig('Figures/distribution_voting_time.png', dpi=300)
+    plt.show()
+
+def cdf_voting_time(df):
+    data = df[(df['Voting_time'] != 0) & (df['Voting_time'] < 24*8)]
+    fig, ax = plt.subplots(figsize=(10,4))
+    sns.ecdfplot(data=data, x='Voting_time', ax=ax, stat='percent', log_scale=(False, False), hue='Year', palette='tab10', complementary=False)
+    ax.set_title('ECDF of voting time')
+    ax.set_xlabel('Voting time in the round (hours)')
+    ax.set_ylabel('Percentage of votes')
+    ax.set_xlim(0, 24*8)
+    plt.savefig('Figures/cdf_voting_time.png', dpi=300)
+    plt.show()
+
+
 def get_progressive_mean(df):
     """ Compute the progressive mean of the votes in each round (i.e. the mean of the votes at each time step)
 
@@ -273,15 +304,18 @@ def plot_vote_evolution(data, x, mean_col = 'center', var_cols = ['lower', 'uppe
         ax (matplotlib.axes._subplots.AxesSubplot): Plot of the evolution of the votes for a given target and a given round of election
     """
     # Plot the evolution of the votes
+    data = data[data.Voting_time < 24*8]
     fig, ax = plt.subplots(figsize=(12, 5))
     sns.lineplot(x=x, y=mean_col, data=data, hue='Results', palette='tab10', ax=ax)
     ax.fill_between(data[data.Results == -1][x], data[data.Results == -1][var_cols[0]], data[data.Results == -1][var_cols[1]], alpha=0.2, color='tab:blue')
     ax.fill_between(data[data.Results == 1][x], data[data.Results == 1][var_cols[0]], data[data.Results == 1][var_cols[1]], alpha=0.2, color='tab:orange')
-    ax.set_xlim(0, 24*8)
     ax.set_ylim(-1, 1.01)
+    ax.set_xlim(data[x].min(), data[x].max())
     ax.set_ylabel('Progressive mean of the votes')
-    if x == 'Voting_time': ax.set_xlabel('Time (days)')
-    elif x == 'Vote_number': ax.set_xlabel('Number of votes')
+    if x == 'Voting_time': 
+        ax.set_xlabel('Time (hours)')
+    elif x == 'Vote_number': 
+        ax.set_xlabel('Number of votes')
     ax.legend(handles=[plt.Line2D([0], [0], color='tab:blue', lw=4, label='Rejected'),
                         plt.Line2D([0], [0], color='tab:orange', lw=4, label='Elected')])
     return ax
@@ -318,7 +352,24 @@ def time_to_float(voting_time):
     voting_time = voting_time.dt.total_seconds() / 3600
     return voting_time
 
-def get_quartiles(grouper):
+def add_voting_time(grouper, stats, on):
+    """ Add the voting time to the stats dataframe in the right format
+
+    Args:
+        grouper (pd.SeriesGroupBy): Groupby object containing the data of the votes
+        stats (pd.DataFrame): Dataframe containing the stats of the votes in each round
+        on (str): Name of the column to use as x-axis
+
+    Returns:
+        stats (pd.DataFrame): Dataframe containing the stats of the votes in each round with the voting time in the right format
+    """
+    if on == 'Vote_number':
+        stats = stats.join(grouper.Voting_time.median(), on=['Results', on])
+
+    stats.Voting_time = time_to_float(stats.Voting_time)
+    return stats
+
+def get_quartiles(grouper, on):
     """ Compute the median, first and last quartile of the votes in each round
 
     Args:
@@ -328,11 +379,12 @@ def get_quartiles(grouper):
         quartiles (pd.DataFrame): Dataframe containing the median, first and last quartile of the votes in each round
     """
     # Compute the median, first and last quartile of the votes in each round
-    quartiles = grouper.quantile([0.25, 0.5, 0.75]).unstack(level=2).reset_index()
+    quartiles = grouper.progressive_mean.quantile([0.25, 0.5, 0.75]).unstack(level=2).reset_index()
     quartiles.rename(columns={0.25: 'lower', 0.5: 'center', 0.75: 'upper'}, inplace=True)
+    quartiles = add_voting_time(grouper, quartiles, on)
     return quartiles
 
-def get_confidence_interval(grouper):
+def get_confidence_interval(grouper, on):
     """ Compute the mean and 95% confidence interval of the votes in each round
 
     Args:
@@ -342,11 +394,96 @@ def get_confidence_interval(grouper):
         ci (pd.DataFrame): Dataframe containing the mean and 95% confidence interval of the votes in each round
     """
     # Compute the mean and 95% confidence interval of the votes in each round
-    ci = grouper.agg(['mean', stats.sem]).reset_index()
+    ci = grouper.progressive_mean.agg(['mean', stats.sem]).reset_index()
     ci['lower'] = ci['mean'] - 1.96 * ci['sem']
     ci['upper'] = ci['mean'] + 1.96 * ci['sem']
     ci.rename(columns={'mean': 'center'}, inplace=True)
+    ci = add_voting_time(grouper, ci, on)
     return ci
+
+# Scatter plot of the progressive mean by voting time and vote number
+def plot_time_distribution(df, x):
+    data = df[df.Voting_time < pd.Timedelta('8 days')]
+    data.Voting_time = time_to_float(data.Voting_time)
+    fig, axes = plt.subplots(1,2,figsize=(20, 6))
+    # Plot the histogram in 2D with log scale colorbar
+    sns.histplot(data=data[data.Results==-1], x=x, y='progressive_mean', ax=axes[0], color='tab:blue', cbar=True, norm=LogNorm(), vmin=None, vmax=None, bins=100)
+    sns.histplot(data=data[data.Results==1], x=x, y='progressive_mean', ax=axes[1], color='tab:orange', cbar=True, norm=LogNorm(), vmin=None, vmax=None, bins=100)
+    axes[0].set_ylim(-1.01, 1.01)
+    axes[1].set_ylim(-1.01, 1.01)
+    axes[0].set_xlim(data[x].min(), data[x].max())
+    axes[1].set_xlim(data[x].min(), data[x].max())
+    axes[0].set_ylabel('Progressive mean')
+    axes[1].set_ylabel('Progressive mean')
+    axes[0].set_title('Rejected targets')
+    axes[1].set_title('Accepted targets')
+    if x == 'Voting_time': 
+        axes[0].set_xlabel('Voting time')
+        axes[1].set_xlabel('Voting time')
+        fig.suptitle('Histogram of the progressive mean over time')
+    elif x == 'Vote_number': 
+        axes[0].set_xlabel('Number of votes casted')
+        axes[1].set_xlabel('Number of votes casted')
+        fig.suptitle('Histogram of the progressive mean over the number of votes casted')
+    plt.savefig('Figures/hist_progressive_mean_over_' + x.lower() + '.png', dpi=300)
+    plt.show()
+
+def predict_results(df, n_first_votes, n_folds):
+    """ Predict the results of the votes using the progressive mean of the votes in each round
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+        n_first_votes (np.array): Array containing the number of first votes to use for the prediction
+        n_folds (int): Number of folds to use for the cross validation
+
+    Returns:
+        (pd.DataFrame): Dataframe containing the results of the prediction
+    """
+    X = df[df.Vote_number <= n_first_votes][['Vote_number', 'progressive_mean', 'Target']]
+    X.Target = X.Target.astype('category').cat.codes
+    y = df[df.Vote_number <= n_first_votes]['Results']
+    clf = GradientBoostingClassifier(random_state=0)
+    # Perform cross validation by taking batches of 10 targets (and their votes) 
+    scores = cross_validate(clf, X, y, cv=GroupKFold(n_splits=n_folds), groups=X.Target, scoring=('accuracy', 'precision', 'recall'))
+    return scores
+
+def early_vote_prediction(df, n_first_votes, n_folds=10):
+    """ Compute the scores of the results prediction for different quantities of first votes
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+        n_first_votes (np.array): Array containing the number of first votes to use for the prediction
+        n_folds (int, optional): Number of folds to use for the cross validation. Defaults to 10.
+
+    Returns:
+        scores (pd.DataFrame): Dataframe containing the scores of the results prediction for different quantities of first votes
+    """
+    scores = pd.DataFrame(index=pd.MultiIndex.from_product([n_first_votes, np.arange(n_folds)], names=['nb_first_votes', 'fold']), columns=[['accuracy', 'precision', 'recall']])
+    for n in tqdm(n_first_votes):
+        res = pd.DataFrame(predict_results(df, n, n_folds))
+        scores.loc[n, :] = res[['test_accuracy', 'test_precision', 'test_recall']].values
+    scores.reset_index(inplace=True)
+    return scores
+
+def plot_prediction_scores(scores):
+    """ Plot the scores of the results prediction over different quantities of first votes
+
+    Args:
+        scores (pd.DataFrame): Dataframe containing the scores of the results prediction for different quantities of first votes
+    """
+    metrics = ['accuracy', 'precision', 'recall']
+    fig, axes = plt.subplots(1,3,figsize=(20, 6))
+    # Get the data
+    for metric, ax in zip(metrics, axes):
+        # Plot the results
+        sns.lineplot(y=scores[metric], x=scores.nb_first_votes, ax=ax, errorbar=('ci', 95))
+        ax.set_ylim(0.6, 1.01)
+        ax.set_xlim(scores.nb_first_votes.min(), scores.nb_first_votes.max())
+        ax.set_title(metric + ' of the prediction')
+        ax.set_xlabel('Number of first votes')
+        ax.set_ylabel(metric)
+    plt.savefig('Figures/prediction_scores.png', dpi=300)
+    plt.show()
 
 
 ########## COMMENTS ANALYSIS FUNCTIONS ##########
@@ -361,6 +498,7 @@ def tokenize_one_comment(comment):
 
 def get_bow_column(tokenized_column, stopwords=True, ponctuation=True, fine_tune_stopwords=True):
     tokenized_comments = tokenized_column.tolist()
+    tokenized_comments = lemmatize_comments(tokenized_comments)
     if stopwords:
         tokenized_comments = remove_stopwords(tokenized_comments)
     if ponctuation:
@@ -374,6 +512,14 @@ def get_bow_column(tokenized_column, stopwords=True, ponctuation=True, fine_tune
 #For Pipeline
 def tokenize_comments(comments_series):
     return [word_tokenize(comment.lower()) for comment in comments_series.tolist()]
+
+def lemmatize_comments(tokenized_comments):
+    lemmatizer = WordNetLemmatizer()
+    outputs = []
+    for comment in tokenized_comments:
+        out = [lemmatizer.lemmatize(token) for token in comment]
+        outputs.append(out)
+    return outputs
 
 def get_dict_representation(tokenized_comments):
     return corpora.Dictionary(tokenized_comments)
@@ -401,8 +547,13 @@ def get_LDA_topics(lda_model, num_words=10):
     return lda_model.print_topics(num_words=num_words)
 
 #Pipeline
-def get_LDA_model(comments_series, num_topics=3, passes=10, stopwords=True, ponctuation=True, fine_tune_stopwords=True):
+def get_LDA_model(comments_series, num_topics=3, passes=10,
+                  stopwords=True, ponctuation=True, fine_tune_stopwords=True,
+                  lemmatize=False):
+    
     tokenized_comments = tokenize_comments(comments_series)
+    if lemmatize:
+        tokenized_comments = lemmatize_comments(tokenized_comments)
     if stopwords:
         tokenized_comments = remove_stopwords(tokenized_comments)
     if ponctuation:
@@ -492,6 +643,29 @@ def get_topic_stat(df_top_stat, nb_topics, topic_positions):
             df_top_stat[f'Topics_from_{t_number}_'+pos+'_topic'] = df_top_stat[f'Topics_from_{t_number}'].apply(lambda x: mappprob_from_list(x, i, 0))
             df_top_stat[f'Topics_from_{t_number}_'+pos+'_topic_prob'] = df_top_stat[f'Topics_from_{t_number}'].apply(lambda x: mappprob_from_list(x, i, 1))
     return df_top_stat
+
+def load_communities_dict_for_topic(path_dir='./community_anal_dfs/'):
+    community_dict = {}
+    for filename in os.listdir(path_dir):
+        df = pd.read_csv(path_dir + filename)
+        df.Source = df.Source.apply(lambda x: x.split('-')[0])
+        community_dict[filename[-8:-4]] = df    
+    return community_dict
+
+def join_left_com_top(df_with_top_lem, communities_dcit):
+    output_dict= {}
+    for key, value in communities_dcit.items():
+        df_to_merge = df_with_top_lem[df_with_top_lem['Year']==int(key)]
+        df_merged = pd.merge(df_to_merge, value, how='left', on='Source')
+        df_merged = df_merged[~df_merged.Community.isnull()]
+        cur_communities = df_merged.Community.unique()
+        output_dict[key] = {}
+        for com in cur_communities:
+            temp = df_merged[df_merged.Community == com]
+            output_dict[key][com] = temp[['Source', 'BoW', 'Topics_from_3',
+                                               'Topics_from_5', 'Topics_from_7',
+                                               'Topics_from_9']]
+    return output_dict
 
 ################### Community on bipartite graph #####################
 
