@@ -1224,7 +1224,8 @@ def compute_df_recall_accuracy_precision(df_ref, df_com_year_, year):
         FP = np.sum((df_com['Vote']!= df_com['Results']) & (df_com['Vote']==1))
         neutral = np.sum(df_com['Vote']==0)
         N = len(df_com['Vote'])
-        accuracy_ = (TP + TN)/N
+        N_accuracy = len(df_com['Vote'])/ - np.sum(df_com['Vote']==0)
+        accuracy_ = (TP + TN)/N_accuracy
         if (TP == 0 & FN == 0) : recall_ = 0
         else: recall_ = TP / (TP + FN)
         precision_ = TP / (TP + FP)
@@ -1285,8 +1286,9 @@ def calculate_accuracy_recall_precision_on_whole_years(group):
     FP = np.sum((group['Vote'] != group['Results']) & (group['Vote'] == 1))
     neutral = np.sum(group['Vote']==0)
     N = len(group['Vote'])
+    N_accuracy = len(group['Vote'])/ - np.sum(group['Vote']==0)
     
-    accuracy = (TP + TN) / N if N != 0 else np.nan
+    accuracy = (TP + TN) / N_accuracy if N_accuracy != 0 else np.nan
     recall = TP / (TP + FN) if (TP + FN) != 0 else np.nan
     precision = TP / (TP + FP) if (TP + FP) != 0 else np.nan
     specificity = TN/(TN+FN) if (TN+FN) != 0 else np.nan
