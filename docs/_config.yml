@@ -1,0 +1,9 @@
+theme: jekyll-theme-minimal
+title: A study of influence in decision-making mechanisms
+description: A template website for ADA
+show_downloads: True
+navigation:
+  - title: Home
+    url: 
+  - title: Example
+    url: ../brainstorm
