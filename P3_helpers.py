@@ -249,9 +249,14 @@ def compute_rounds(data, round_threshold):
 
 ########## VOTE EVOLUTION FUNCTIONS ##########
 def pdf_voting_time(df):
+    """ Plot the probability density function of the voting time
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+    """
     data = df[(df['Voting_time'] != 0) & (df['Voting_time'] < 24*8)]
     fig, ax = plt.subplots(figsize=(10,4))
-    sns.histplot(data=data, x='Voting_time', ax=ax, bins=100, stat='percent', log_scale=(False, False), hue='Year', palette='tab10', multiple='stack')
+    sns.histplot(data=data, x='Voting_time', ax=ax, bins=100, stat='percent', log_scale=(False, False), hue='Year', palette='CMRmap', multiple='stack')
     ax.set_title('Histogram of voting time')
     ax.set_xlabel('Voting time in the round (hours)')
     ax.set_ylabel('Percentage of votes')
@@ -260,13 +265,18 @@ def pdf_voting_time(df):
     plt.show()
 
 def cdf_voting_time(df):
+    """ Plot the cumulative distribution function of the voting time
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+    """
     data = df[(df['Voting_time'] != 0) & (df['Voting_time'] < 24*8)]
     fig, ax = plt.subplots(figsize=(10,4))
-    sns.ecdfplot(data=data, x='Voting_time', ax=ax, stat='percent', log_scale=(False, False), hue='Year', palette='tab10', complementary=False)
-    ax.set_title('ECDF of voting time')
+    sns.ecdfplot(data=data, x='Voting_time', ax=ax, stat='percent', log_scale=(True, True), hue='Year', palette='CMRmap', complementary=True)
+    ax.set_title('CCDF of voting time')
     ax.set_xlabel('Voting time in the round (hours)')
     ax.set_ylabel('Percentage of votes')
-    ax.set_xlim(0, 24*8)
+    ax.set_xlim(np.min(data.Voting_time), np.min(data.groupby('Year').Voting_time.max()))
     plt.savefig('Figures/cdf_voting_time.png', dpi=300)
     plt.show()
 
@@ -363,7 +373,7 @@ def add_voting_time(grouper, stats, on):
         stats (pd.DataFrame): Dataframe containing the stats of the votes in each round with the voting time in the right format
     """
     if on == 'Vote_number':
-        stats = stats.join(grouper.Voting_time.median(), on=['Results', on])
+        stats = stats.join(grouper.Voting_time.min(), on=['Results', on])
 
     stats.Voting_time = time_to_float(stats.Voting_time)
     return stats
@@ -402,6 +412,12 @@ def get_confidence_interval(grouper, on):
 
 # Scatter plot of the progressive mean by voting time and vote number
 def plot_time_distribution(df, x):
+    """ Plot the distribution of the progressive mean over time
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+        x (str): Name of the column to use as x-axis
+    """
     data = df[df.Voting_time < pd.Timedelta('8 days')]
     data.Voting_time = time_to_float(data.Voting_time)
     fig, axes = plt.subplots(1,2,figsize=(20, 6))
@@ -483,6 +499,52 @@ def plot_prediction_scores(scores):
         ax.set_ylabel(metric)
     plt.savefig('Figures/prediction_scores.png', dpi=300)
     plt.show()
+
+########## SOURCE ANALYSIS FUNCTIONS ##########
+
+def plot_nb_votes_per_source(df):
+    """ Plot the histogram of the number of votes per sources
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+    """
+    # Compute the number of votes per sources
+    votes_per_source = df.groupby(['Source', 'Year'])
+    votes_per_source = votes_per_source.size().reset_index()
+    median = np.median(votes_per_source[0])
+
+    # Plot the histogram of the number of votes per sources
+    fig, ax = plt.subplots(figsize=(10, 5))
+    sns.histplot(votes_per_source, x=0, hue='Year', multiple='stack', ax=ax, log_scale=(False, True), bins=100, palette='CMRmap')
+    ax.set_title('Histogram of the number of votes per sources and per year, median = {:.0f}'.format(median))
+    ax.set_xlabel('Number of votes')
+    ax.set_ylabel('Number of sources')
+    ax.set_xlim(0, np.max(votes_per_source[0]))
+    plt.savefig('Figures/hist_votes_per_source.png')
+    plt.show()
+
+def get_source_df(df):
+    """ Remove the sources with less than 3 votes (i.e. the median) and return the resulting dataframe
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+
+    Returns:
+        df (pd.DataFrame): Dataframe containing the data of the votes with the sources with less than 3 votes removed
+    """
+    # Compute the number of votes per sources
+    votes_per_source = df.groupby(['Source']).size()
+    median = np.median(votes_per_source)
+
+    # Get the sources with more than the median number of votes (i.e. more than 3 votes)
+    sources = votes_per_source[votes_per_source > median].index
+
+    # Get the dataframe with only the sources with more than 3 votes
+    df = df[df['Source'].isin(sources)]
+    return df
+
+
+
 
 
 ########## COMMENTS ANALYSIS FUNCTIONS ##########

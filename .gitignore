@@ -15,3 +15,6 @@ cosine_sim.npy
 # remove lda model state dict
 lda_model_*
 nbTopics_*
+
+# Remove the figures
+Figures/
