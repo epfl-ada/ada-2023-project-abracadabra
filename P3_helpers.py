@@ -790,3 +790,14 @@ def extract_community_from_projected_graph(projected_G):
     com_dict = community.best_partition(projected_G)
     df_com = pd.DataFrame(list(com_dict.items()), columns=['Source', 'Community'])
     return df_com
+
+################### Community analysis #####################
+
+
+
+
+
+
+
+
+################### End #####################
