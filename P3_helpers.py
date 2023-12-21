@@ -42,7 +42,7 @@ def data_parsing(path = 'wiki-RfA.txt'):
         df (pd.DataFrame): Dataframe containing the data of the votes
     """
     # Read the file into a list of lines
-    with open(path, 'r') as file:
+    with open(path, 'r', encoding = 'utf8') as file:
         lines = file.readlines()
 
     # Create a list of dictionaries, where each dictionary represents a record
@@ -1210,6 +1210,8 @@ def compute_df_recall_accuracy_precision(df_ref, df_com_year_, year):
     accuracy = []
     recall = []
     precision = []
+    specificity = []
+    neutral_vote_prop = []
     #loop over all communities of this year
     for n in range (df_com_year_['Community'].max()+1):
         com = list(source_per_com[n].values)
@@ -1220,24 +1222,32 @@ def compute_df_recall_accuracy_precision(df_ref, df_com_year_, year):
         TN = np.sum((df_com['Vote']== df_com['Results']) & (df_com['Vote']==-1))
         FN = np.sum((df_com['Vote']!= df_com['Results']) & (df_com['Vote']==-1))
         FP = np.sum((df_com['Vote']!= df_com['Results']) & (df_com['Vote']==1))
+        neutral = np.sum(df_com['Vote']==0)
         N = len(df_com['Vote'])
-        accuracy_ = (TP + TN)/N
+        N_accuracy = len(df_com['Vote'])/ - np.sum(df_com['Vote']==0)
+        accuracy_ = (TP + TN)/N_accuracy
         if (TP == 0 & FN == 0) : recall_ = 0
         else: recall_ = TP / (TP + FN)
         precision_ = TP / (TP + FP)
+        specificity_ = TN/(TN+FN)
+        neutral_vote_prop_ = neutral/N
         accuracy.append(accuracy_)
         recall.append(recall_)
         precision.append(precision_)
+        specificity.append(specificity_)
+        neutral_vote_prop.append(neutral_vote_prop_)
     
     #create the df
     years_ = [int(year)]*(df_com_year_['Community'].max()+1)
     com = list(range(df_com_year_['Community'].max()+1))
-    df_stat_com = pd.DataFrame(columns=['Year', 'Com_nbr', 'Accuracy', 'Precision', 'Recall'])
+    df_stat_com = pd.DataFrame(columns=['Year', 'Com_nbr', 'Accuracy', 'Precision', 'Recall', 'Specificity', 'Neutral_vote_prop'])
     df_stat_com['Year'] = years_
     df_stat_com['Com_nbr'] = com
     df_stat_com['Accuracy'] = accuracy
     df_stat_com['Precision'] = precision
     df_stat_com['Recall'] = recall
+    df_stat_com['Specificity'] = specificity
+    df_stat_com['Neutral_vote_prop'] = neutral_vote_prop
    
     return df_stat_com
 
@@ -1248,7 +1258,7 @@ def plot_recall_accuracy_precision_per_com(df, years):
         year (list): Specific years on which we want our plot
     """
     # Transform the df in an appropriate form
-    df_melt = pd.melt(df[df['Year'].isin(years)], id_vars=['Com_nbr', 'Year'], value_vars=['Accuracy', 'Precision', 'Recall'],
+    df_melt = pd.melt(df[df['Year'].isin(years)], id_vars=['Com_nbr', 'Year'], value_vars=['Accuracy', 'Precision', 'Recall', 'Specificity', 'Neutral_vote_prop'],
                         var_name='Stat', value_name='Pourcentage')
 
     # Create the plot
@@ -1256,11 +1266,11 @@ def plot_recall_accuracy_precision_per_com(df, years):
 
     # Add labels and title
     g.set_axis_labels('Community', 'Proportion')
-    g.fig.suptitle('Accuracy, Recall and Precision per community and per year', y=1.02)
+    g.fig.suptitle('Accuracy, Recall, Precision, Specificity and proportion of neutral vote per community and per year', y=1.02)
 
     # Move legend to below the graph
     g.fig.subplots_adjust(bottom=0.2)
-    sns.move_legend(g, "upper center", bbox_to_anchor=(.5, 0.1), ncol=3, title=None, frameon=False)
+    sns.move_legend(g, "upper center", bbox_to_anchor=(.5, 0.1), ncol=5, title=None, frameon=False)
 
     # Show the plot
     plt.show()
@@ -1274,16 +1284,22 @@ def calculate_accuracy_recall_precision_on_whole_years(group):
     TN = np.sum((group['Vote'] == group['Results']) & (group['Vote'] == -1))
     FN = np.sum((group['Vote'] != group['Results']) & (group['Vote'] == -1))
     FP = np.sum((group['Vote'] != group['Results']) & (group['Vote'] == 1))
+    neutral = np.sum(group['Vote']==0)
     N = len(group['Vote'])
+    N_accuracy = len(group['Vote'])/ - np.sum(group['Vote']==0)
     
-    accuracy = (TP + TN) / N if N != 0 else np.nan
+    accuracy = (TP + TN) / N_accuracy if N_accuracy != 0 else np.nan
     recall = TP / (TP + FN) if (TP + FN) != 0 else np.nan
     precision = TP / (TP + FP) if (TP + FP) != 0 else np.nan
-    
+    specificity = TN/(TN+FN) if (TN+FN) != 0 else np.nan
+    neutral_vote_prop = neutral/N if N != 0 else np.nan
+
     return pd.Series({
         'Accuracy': np.round(accuracy,3),
         'Precision': np.round(precision,3),
-        'Recall': np.round(recall,3)
+        'Recall': np.round(recall,3),
+        'Specificity' : np.round(specificity,3),
+        'Neutral_vote_prop' : np.round(neutral_vote_prop, 3)
     })
 
 def plot_accuracy_recall_precision_on_whole_years(df):
@@ -1292,19 +1308,209 @@ def plot_accuracy_recall_precision_on_whole_years(df):
         df (pd.DataFrame): Dataframe containing the values to plot
     """
     # Transform the df in an appropriate form
-    melted_df = pd.melt(df[['Year', 'Accuracy',  'Precision', 'Recall']], id_vars=['Year'], var_name='Statistic', value_name='Value')
+    melted_df = pd.melt(df[['Year', 'Accuracy',  'Precision', 'Recall', 'Specificity', 'Neutral_vote_prop']], id_vars=['Year'], var_name='Statistic', value_name='Value')
     # Create a bar plot using Seaborn
     plt.figure(figsize=(10, 6))  
     sns.barplot(x='Year', y='Value', hue='Statistic', data=melted_df, palette='muted')
 
     # Add labels and title
     plt.xlabel('Year')
-    plt.ylabel('Voting Time (hours)')
-    plt.title('Mean and Median Voting Time per Year')
+    plt.ylabel('Proportion')
+    plt.title('Accuracy, Recall, Precision, Specificity and proportion of negative vote per year')
 
     # Add legend
-    plt.legend(title='Vote', loc='lower center', bbox_to_anchor=(0.5, -0.25), ncol=3)
+    plt.legend(title='Vote', loc='lower center', bbox_to_anchor=(0.5, -0.25), ncol=5)
 
     # Show the plot
     plt.show()
+    
+    
+########## USER'S REVISION FUNCTIONS ##########
+def process_elections(dataset):
+    # Ensure 'Date' column is in datetime format
+    dataset['Date'] = pd.to_datetime(dataset['Date'], errors='coerce')
+
+    # Group by 'Target' and get the first vote's date and result for each election
+    result_df = dataset.groupby('Target').agg(
+        First_Vote_Date=('Date', 'first'),
+        Result=('Results', 'first')
+    ).reset_index()
+
+    # Extract year and month from the 'First_Vote_Date' column
+    result_df['Year_Month'] = result_df['First_Vote_Date'].dt.to_period('M')
+
+    return result_df
+
+def process_elections_ts(dataset):
+    # Ensure 'Date' column is in datetime format
+    dataset['Date'] = pd.to_datetime(dataset['Date'], errors='coerce')
+
+    dataset = dataset.sort_values(['Target', 'Round', 'Date'])
+    # Group by 'Target' and get the first vote's date and result for each election
+    result_df = dataset.groupby(['Target', 'Round']).agg(
+        First_Vote_Date=('Date', 'first'),
+        Result=('Results', 'first')
+    ).reset_index()
+
+    # Extract year and month from the 'First_Vote_Date' column
+    result_df['Year_Month'] = result_df['First_Vote_Date'].dt.to_period('M')
+
+    return result_df
+
+def generate_user_revision_dataset(revisions_dataset, election_dataset):
+    # Ensure 'month' and 'Date' columns are in datetime format
+    election_dataset['First_Vote_Date'] = pd.to_datetime(election_dataset['First_Vote_Date'], format='%Y-%m-%d')
+
+    # Create a DataFrame with 'user_name', 'month', and 'revisions'
+    result_df = pd.merge(revisions_dataset, election_dataset[['Target', 'First_Vote_Date', 'Result']], left_on='user_name', right_on='Target', how='left')
+    # Calculate the relative months based on each user's election date
+    result_df['Relative_Month'] = (result_df['month'].dt.year - result_df['First_Vote_Date'].dt.year) * 12 + result_df['month'].dt.month - result_df['First_Vote_Date'].dt.month
+    # Filter rows based on the -12 to 12 range
+    result_df = result_df[result_df['Relative_Month'].between(-12, 12, inclusive='both')]
+
+    # Pivot the DataFrame to have columns for each month
+    result_df_pivot = result_df.pivot_table(index='user_name', columns='Relative_Month', values='revisions', aggfunc='sum', fill_value=0)
+
+    # Rename the columns to represent months
+    result_df_pivot.columns = [f'Month_{m}' for m in result_df_pivot.columns]
+
+    # Add the 'Results' column to the resulting DataFrame
+    result_df_pivot['Result'] = result_df.groupby('user_name')['Result'].first()
+    return result_df_pivot
+
+def plot_average_edit(data, x, mean_col = 'center', var_cols = ['low', 'up']):
+
+    # Plot the evolution of the edit
+    fig, ax = plt.subplots(figsize=(12, 5))
+    sns.lineplot(x=x, y=mean_col, data=data, hue='Result', palette='tab10', ax=ax)
+    ax.fill_between(data[data.Result == -1][x], data[data.Result == -1][var_cols[0]], data[data.Result == -1][var_cols[1]], alpha=0.2, color='tab:blue')
+    ax.fill_between(data[data.Result == 1][x], data[data.Result == 1][var_cols[0]], data[data.Result == 1][var_cols[1]], alpha=0.2, color='tab:orange')
+    ax.set_ylabel('Mean edit')
+    ax.legend(handles=[plt.Line2D([0], [0], color='tab:blue', lw=4, label='Rejected'),
+                        plt.Line2D([0], [0], color='tab:orange', lw=4, label='Elected')])
+    return ax
+
+def revision_stat(dataset):
+    dataset = dataset.reset_index()
+    melted_df= dataset.melt(id_vars=['user_name', 'Result'], var_name='Month', value_name='Revisions')
+    result_stat = melted_df.groupby(['Result', 'Month'])['Revisions'].agg(
+    	mean=np.mean,
+    	confidence_interval=lambda x: list(stats.norm.interval(0.95, loc=np.mean(x), scale=stats.sem(x)))
+	).reset_index()
+    result_stat['Month'] = result_stat['Month'].str.extract(r'(-?\d+)').astype(int)
+    result_stat[['low', 'up']] = pd.DataFrame(result_stat['confidence_interval'].tolist())
+    result_stat = result_stat.drop('confidence_interval', axis=1)
+
+    return result_stat
+
+def create_df_causal(election, revision):
+
+  df = pd.DataFrame(columns=['Target','revisions','Result'])
+
+  for index, row in election.iterrows():
+
+    election_round = row['Round']
+    election_month = row['Year_Month']
+    election_target =  row['Target']
+    election_result = row['Result']
+
+    # Extract data for the specified time window before the election
+    time_window_start =  (election_month.to_timestamp() - pd.DateOffset(months=1)).to_period('M')
+    time_window_end =  election_month
+
+    revisions_data = revision[
+        (revision['user_name'] == election_target) &
+        (revision['month'] >= time_window_start) &
+        (revision['month'] < time_window_end)
+    ]
+
+    add =  pd.DataFrame({
+    'Target': [election_target],
+    'revisions': [revisions_data['revisions'].sum()],
+    'Result': [election_result]
+  })
+
+    df = pd.concat([df,add], ignore_index=True)
+
+  return df
+
+def compute_stat(ts, topk_dict):
+  ts['Year'] = ts['Year'].astype(int)
+  stats=pd.DataFrame()
+
+  for year, df in topk_dict.items():
+    filter_ts = ts[ts['Year']==year]
+    merged_df = pd.merge(df, filter_ts, on='Source', how='left')
+
+    merged_df.reset_index(drop=True, inplace=True)
+    grouped_df = merged_df.groupby(['Year', 'Community', 'Source'])
+
+    average_stats = grouped_df[['Voting_time', 'Vote_number']].mean().round(2).reset_index()
+
+    merged_df = merged_df.drop_duplicates(subset=['Source'])
+    average_stats = pd.merge(average_stats, merged_df[['Community', 'Source', 'revisions']], on=['Community', 'Source'], how='left')
+
+    stats=pd.concat([stats,average_stats], ignore_index=True)
+
+  stats = stats.sort_values(by=['Year', 'Community', 'revisions'], ascending=[True, True, False])
+  stats = stats.reset_index()
+  stats = stats.drop('index', axis=1)
+  return stats
+
+def create_df_Community_edit(com, edit, year):
+
+    filter = edit.groupby(['user_name','year'])['revisions'].sum()
+    df_filter = filter.reset_index()
+    df_filter.columns = ['user_name', 'year', 'revisions']
+
+    filter_Source = df_filter[df_filter['year']==year]
+    com['Source'] = com['Source'].str.replace('-source', '')
+    df_Community_edit = pd.merge(com, filter_Source[['user_name', 'revisions']], left_on='Source', right_on='user_name', how='left')
+    df_Community_edit = df_Community_edit.drop('user_name', axis=1)
+    return df_Community_edit
+
+def compute_stats_community(df_dict):
+
+  stats_dict = {}
+
+  for key in df_dict.keys():
+
+    agg_data = df_dict[key].groupby('Community')['revisions'].agg(['sum', 'mean', 'size']).reset_index()
+    agg_data['sum_normalized'] = agg_data['sum'] / agg_data['size']
+    agg_data = agg_data.drop('size', axis=1)
+    stats_dict[key] = agg_data
+
+  return stats_dict
+
+def compute_top_k(df_dict, k):
+  stats_dict = {}
+
+  for key in df_dict.keys():
+    # Calculate the top 10 user_name for each community
+    top_users_by_community = df_dict[key].groupby(['Community', 'Source'])['revisions'].sum().reset_index()
+    top_users_by_community = top_users_by_community.sort_values(by='revisions', ascending=False)
+    top_users_by_community = top_users_by_community.groupby('Community').head(k)
+    stats_dict[key] = top_users_by_community
+  return stats_dict
+
+def load_datasets_com(edit):
+    years = [2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013]
+    df_edit_year_dict = {}
+
+    for year in years:
+        # Assuming the CSV file naming convention is 'df_community_year.csv'
+        filename = f'df_community_{year}.csv'
+
+        try:
+            # Load CSV into Pandas DataFrame
+            df = pd.read_csv(filename)
+
+            df_edit = create_df_Community_edit(df, edit, year)
+            # Append to the list
+            df_edit_year_dict[year] = df_edit
+        except FileNotFoundError:
+            # Handle the case where the file is not found
+            print(f"File {filename} not found. Skipping.")
+
+    return df_edit_year_dict
 ################### End #####################
