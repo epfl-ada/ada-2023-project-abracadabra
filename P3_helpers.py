@@ -9,6 +9,20 @@ from tqdm import tqdm
 import ast
 import json
 import os
+import re
+
+import vaderSentiment
+import spacy, nltk, gensim, sklearn
+import pyLDAvis.gensim_models
+import re
+
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from sklearn.feature_extraction.text import CountVectorizer
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from textblob import TextBlob
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from nltk.corpus import stopwords
 
 from sklearn.neighbors import KernelDensity
 from sklearn.ensemble import GradientBoostingClassifier
@@ -1501,4 +1515,201 @@ def load_datasets_com(edit):
             print(f"File {filename} not found. Skipping.")
 
     return df_edit_year_dict
+
+
+########## SENTIMENT ANALYSIS FUNCTIONS ##########
+
+def removing_comment_headers(df):
+    df_sentiment = df.copy()
+
+    support_pattern = re.compile(r'^\bsupport\w*\b', flags=re.IGNORECASE)
+    df_sentiment["Parsed_Comment"] = df_sentiment["Parsed_Comment"].str.replace(support_pattern, '', regex=True)
+    neutral_pattern = re.compile(r'^\bneutral\w*\b', flags=re.IGNORECASE)
+    df_sentiment["Parsed_Comment"] = df_sentiment["Parsed_Comment"].str.replace(neutral_pattern, '', regex=True)
+    oppose_pattern = re.compile(r'^\boppose\w*\b', flags=re.IGNORECASE)
+    df_sentiment["Parsed_Comment"] = df_sentiment["Parsed_Comment"].str.replace(oppose_pattern, '', regex=True)
+    
+    return df_sentiment
+
+
+def sentiment_analysis(df):
+    analyzer = SentimentIntensityAnalyzer()
+    df["sent_score"] = [analyzer.polarity_scores(sent)['compound'] for sent in df["Parsed_Comment"]]
+    
+    return df
+
+
+def plot_compound_sentiment_score(df):
+
+    fig, axs = plt.subplots(1, 1, figsize=(10, 4))
+
+    axs.hist(df["sent_score"], bins=15)
+    axs.set_xlim([-1, 1])
+    axs.set_ylim([0, 195647])
+    axs.set_xlabel('Compound sentiment')
+    axs.set_ylabel('Number of comments')
+    axs.set_title('Compound sentiment scores')
+    
+    
+def pieChart_perYear_sentiment_score(df):
+
+    pos_comments = df[df['sent_score'] >= 0.05].groupby('Year')['sent_score'].count().to_frame()
+    neg_comments = df[df['sent_score'] <-0.05].groupby('Year')['sent_score'].count().to_frame()
+    neu_comments = df[(df['sent_score'] > -0.05) & (df['sent_score'] < 0.05)].groupby('Year')['sent_score'].count().to_frame()
+
+    comment_sentiment_count = pd.DataFrame()
+    comment_sentiment_count["pos_comments"] = pos_comments
+    comment_sentiment_count["neg_comments"] = neg_comments
+    comment_sentiment_count["neu_comments"] = neu_comments
+    
+    sns.set(style="whitegrid")
+    plt.figure(figsize=(100, 50))
+
+    for i in range(len(comment_sentiment_count)):
+        plt.subplot(4, 3, i+1)
+        year_data = comment_sentiment_count.iloc[i]
+        plt.pie(year_data, labels=year_data.index, autopct='%1.1f%%', startangle=90, textprops={'fontsize': 50})
+        plt.title(f'Year {int(comment_sentiment_count.index[i])}', fontsize=70)
+
+    plt.tight_layout()
+    plt.show()
+    
+
+def comment_vectorizing(df):
+    vectorizer = CountVectorizer(stop_words='english')
+    df['Vectorized_Comment'] = df['Parsed_Comment'].apply(lambda x: vectorizer.build_analyzer()(x)) 
+    df['Vector_Size'] = df['Vectorized_Comment'].apply(lambda x: len(x))
+    
+    return df
+
+
+def print_vectorized_comment_stats(df):
+
+    print('The minimun length of the comment is: ', np.min(df['Vector_Size']))
+    print('The maximum length of the comment is: ', np.max(df['Vector_Size']))
+
+    proportion_no_comment=np.sum(df['Vector_Size']==0)/len(df['Vector_Size'])*100
+    print('The percentage of vote without comment is: ', proportion_no_comment)
+    proportion_one_word=np.sum(df['Vector_Size']==1)/len(df['Vector_Size'])*100
+    print('The percentage of comment with one word is: ', proportion_one_word)
+    proportion_two_word=np.sum(df['Vector_Size']==2)/len(df['Vector_Size'])*100
+    print('The percentage of comment with 2 words is: ', proportion_two_word)
+    
+    
+def sentiment_remove_vectorSize_zero(df):
+    df = df[df["Vector_Size"] != 0]
+    
+    return df
+
+
+def com_vote_sentiment_analysis(df_ref, df_com_year_, year):
+    #filter the ref df
+    df_ref_year = df_ref[df_ref['Year']==int(year)]
+    #extract the source for the community df for 1 year
+    source_per_com = df_com_year_.groupby('Community').apply(lambda x : x['Source'])
+    pos_vote_prop = []
+    neg_vote_prop = []
+    neu_vote_prop = []
+    pos_sentScore_prop = []
+    neg_sentScore_prop = []
+    neu_sentScore_prop = []
+    
+    #loop over all communities of this year
+    for n in range (df_com_year_['Community'].max()+1):
+        com = list(source_per_com[n].values)
+        #extract rows of the ref df based on the source which are in the community n
+        df_com = df_ref_year[df_ref_year['Source'].isin(com)].reset_index(drop=True)
+        #extract proportion for theses sources
+        prop_vote_pos_com = np.sum(df_com['Vote']==1)/len(df_com['Vote'])
+        prop_vote_neg_com = np.sum(df_com['Vote']==-1)/len(df_com['Vote'])
+        prop_vote_neu_com = np.sum(df_com['Vote']==0)/len(df_com['Vote'])
+        prop_sentScore_pos_com = sum(np.array(df_com['sent_score']>=0.05))/len(df_com['sent_score'])
+        prop_sentScore_neg_com = sum(np.array(df_com['sent_score']<-0.05))/len(df_com['sent_score'])
+        prop_sentScore_neu_com = sum(np.abs(df_com['sent_score'])<0.05)/len(df_com['sent_score'])
+        pos_vote_prop.append(prop_vote_pos_com)
+        neg_vote_prop.append(prop_vote_neg_com)
+        neu_vote_prop.append(prop_vote_neu_com)
+        pos_sentScore_prop.append(prop_sentScore_pos_com)
+        neg_sentScore_prop.append(prop_sentScore_neg_com)
+        neu_sentScore_prop.append(prop_sentScore_neu_com)
+    #create the df
+    years_ = [int(year)]*(df_com_year_['Community'].max()+1)
+    com = list(range(df_com_year_['Community'].max()+1))
+    df_stat_com = pd.DataFrame(columns=['Year', 'Com_nbr', 'Pos_vote_prop', 'Neg_vote_prop', 'Neu_vote_prop', 'Pos_sentScore_prop', 'Neg_sentScore_prop', 'Neu_sentScore_prop'])
+    df_stat_com['Year'] = years_
+    df_stat_com['Com_nbr'] = com
+    df_stat_com['Pos_vote_prop'] = pos_vote_prop
+    df_stat_com['Neg_vote_prop'] = neg_vote_prop
+    df_stat_com['Neu_vote_prop'] = neu_vote_prop
+    df_stat_com['Pos_sentScore_prop'] = pos_sentScore_prop
+    df_stat_com['Neg_sentScore_prop'] = neg_sentScore_prop
+    df_stat_com['Neu_sentScore_prop'] = neu_sentScore_prop
+    
+    return df_stat_com
+
+
+def community_sentiment_analysis_per_year(df):
+
+    years = df['Year'].unique()
+    df_com = pd.DataFrame(columns = ['Year', 'Community_df'])
+    for year in years:
+        path = 'Community/df_community_'+ str(int(year)) + '.csv'
+        df_ = load_com_csv(path)
+        df_com.loc[len(df_com)] = [year, df_]
+
+    df_com_stat = pd.DataFrame(columns = ['Year'])
+    df_com_stat['Year'] = years
+
+    list_nbr_com = df_com['Community_df'].apply(lambda x: x['Community'].max()+1)
+    df_com_stat['Nbr_of_com'] = list_nbr_com
+
+    list_nbr_in_com_ = df_com['Community_df'].apply(lambda x: x.groupby('Community').size())
+    df_com_stat['Com_size'] = list(list_nbr_in_com_.values)
+    #remove nan values when the number of community is lower
+    list_nbr_in_com_filtered = df_com_stat['Com_size'].apply(lambda x: x[~np.isnan(x)])
+    df_com_stat['Com_size'] = list_nbr_in_com_filtered
+    df_com_stat
+
+    years = df['Year'].unique()
+    dict_com = {}
+    for year in years:
+        path = 'Community/df_community_'+ str(int(year)) + '.csv'
+        df_ = load_com_csv(path)
+        dict_com[str(int(year))]=df_
+
+    df_stat_com = pd.DataFrame(columns=['Year', 'Com_nbr', 'Pos_vote_prop', 'Neg_vote_prop', 'Neu_vote_prop', 'Pos_sentScore_prop', 'Neg_sentScore_prop', 'Neu_sentScore_prop'])
+    for year in dict_com.keys():
+        df_com_year = dict_com[str(year)]
+        stat_com = com_vote_sentiment_analysis(df, df_com_year, year)
+        df_stat_com = pd.concat([df_stat_com, stat_com], ignore_index=True)
+        
+    return df_stat_com
+
+
+
+def plot_dist_sentScore_per_com(df, years):
+    # Melt the DataFrame to make it suitable for Seaborn
+    df_melt = pd.melt(df[df['Year'].isin(years)], id_vars=['Com_nbr', 'Year'], value_vars=['Pos_sentScore_prop', 'Neg_sentScore_prop', 'Neu_sentScore_prop'],
+                        var_name='Type of sentiment', value_name='Pourcentage')
+
+    # Create a facet grid with a separate plot for each year
+    g = sns.catplot(x='Com_nbr', y='Pourcentage', hue='Type of sentiment', col='Year', data=df_melt, kind='bar', palette='colorblind')
+
+    # Add labels and title
+    g.set_axis_labels('Community', 'SentScore percentage')
+    g.fig.suptitle('Vote percentage per community and per year', y=1.02)
+
+    # Move legend to below the graph
+    g.fig.subplots_adjust(bottom=0.2)
+    sns.move_legend(g, "upper center", bbox_to_anchor=(.5, 0.1), ncol=3, title=None, frameon=False)
+
+    # Show the plot
+    plt.show()
+    
+
+
+
+
+   
+
 ################### End #####################
