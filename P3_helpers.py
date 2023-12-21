@@ -724,6 +724,15 @@ def plot_graph_jsim(G):
 ################### Community on bipartite graph #####################
 
 def create_bipartite_weight(sources, targets, weights):
+    """ Create a bipartite weighted graph 
+    Args:
+        sources (list): list of Source name 
+        targets (list): list of Target name
+        weights (list): list of weight, either 0, 1 or -1 corresponding to the vote of the source for the target
+    Returns:
+        G (nx.Graph): bipartite graph created
+    """
+    
     #create bipartite graph
     G = nx.Graph()
     for i in range (len(sources)):
@@ -733,6 +742,12 @@ def create_bipartite_weight(sources, targets, weights):
     return G
 
 def create_bipartite_weight_from_df(df):
+    """" Create a bipartite weighted graph for one specific year
+    Args:
+        df (pd.Dataframe): Bipartite network containing source and target
+    Returns:
+        G (nx.Graph): bipartite graph created
+    """
     #Extract source, target, weight
     sources = list(df['Source'])
     targets = list(df['Target'])
@@ -748,6 +763,13 @@ def create_bipartite_weight_from_df(df):
     return G
 
 def create_bipartite_weight_from_df_year(df, year):
+    """ Create a bipartite weighted graph for one specific year
+    Args:
+        df (pd.Dataframe): Bipartite network containing source and target
+        year (float): a specific year on which the graph needs to be built on
+    Returns:
+        G (nx.Graph): bipartite graph created
+    """
     #Take data from the year
     df_year= df[df['Year']==year]
 
@@ -766,6 +788,13 @@ def create_bipartite_weight_from_df_year(df, year):
     return G
 
 def shared_neighbors_count(G, u, v):
+    """ Count the number of neighbor (same target in network G and same weight) in common for node u and v
+    Args:
+        G (nx.Graph): Bipartite network containing source and target
+        u, v: specific node of the graph
+    Returns:
+        len (int): number of shared neighbors
+    """
     #Check if nodes u and v belong to the same side of the bipartite graph
     if G.nodes[u]['bipartite'] != G.nodes[v]['bipartite']:
         raise ValueError("Nodes should belong to the same side of the bipartite graph.")
@@ -773,7 +802,7 @@ def shared_neighbors_count(G, u, v):
     #Select the other part of the graph
     other_side = 1 - G.nodes[u]['bipartite']
 
-    #u and v neighbor from the othe rpart of the graph
+    #u and v neighbor from the other part of the graph
     neighbors_u = set(n for n in G.neighbors(u) if G.nodes[n]['bipartite'] == other_side)
     neighbors_v = set(n for n in G.neighbors(v) if G.nodes[n]['bipartite'] == other_side)
 
