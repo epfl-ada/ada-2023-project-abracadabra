@@ -250,9 +250,14 @@ def compute_rounds(data, round_threshold):
 
 ########## VOTE EVOLUTION FUNCTIONS ##########
 def pdf_voting_time(df):
+    """ Plot the probability density function of the voting time
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+    """
     data = df[(df['Voting_time'] != 0) & (df['Voting_time'] < 24*8)]
     fig, ax = plt.subplots(figsize=(10,4))
-    sns.histplot(data=data, x='Voting_time', ax=ax, bins=100, stat='percent', log_scale=(False, False), hue='Year', palette='tab10', multiple='stack')
+    sns.histplot(data=data, x='Voting_time', ax=ax, bins=100, stat='percent', log_scale=(False, False), hue='Year', palette='CMRmap', multiple='stack')
     ax.set_title('Histogram of voting time')
     ax.set_xlabel('Voting time in the round (hours)')
     ax.set_ylabel('Percentage of votes')
@@ -261,13 +266,18 @@ def pdf_voting_time(df):
     plt.show()
 
 def cdf_voting_time(df):
+    """ Plot the cumulative distribution function of the voting time
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+    """
     data = df[(df['Voting_time'] != 0) & (df['Voting_time'] < 24*8)]
     fig, ax = plt.subplots(figsize=(10,4))
-    sns.ecdfplot(data=data, x='Voting_time', ax=ax, stat='percent', log_scale=(False, False), hue='Year', palette='tab10', complementary=False)
-    ax.set_title('ECDF of voting time')
+    sns.ecdfplot(data=data, x='Voting_time', ax=ax, stat='percent', log_scale=(True, True), hue='Year', palette='CMRmap', complementary=True)
+    ax.set_title('CCDF of voting time')
     ax.set_xlabel('Voting time in the round (hours)')
     ax.set_ylabel('Percentage of votes')
-    ax.set_xlim(0, 24*8)
+    ax.set_xlim(np.min(data.Voting_time), np.min(data.groupby('Year').Voting_time.max()))
     plt.savefig('Figures/cdf_voting_time.png', dpi=300)
     plt.show()
 
@@ -364,7 +374,7 @@ def add_voting_time(grouper, stats, on):
         stats (pd.DataFrame): Dataframe containing the stats of the votes in each round with the voting time in the right format
     """
     if on == 'Vote_number':
-        stats = stats.join(grouper.Voting_time.median(), on=['Results', on])
+        stats = stats.join(grouper.Voting_time.min(), on=['Results', on])
 
     stats.Voting_time = time_to_float(stats.Voting_time)
     return stats
@@ -403,6 +413,12 @@ def get_confidence_interval(grouper, on):
 
 # Scatter plot of the progressive mean by voting time and vote number
 def plot_time_distribution(df, x):
+    """ Plot the distribution of the progressive mean over time
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+        x (str): Name of the column to use as x-axis
+    """
     data = df[df.Voting_time < pd.Timedelta('8 days')]
     data.Voting_time = time_to_float(data.Voting_time)
     fig, axes = plt.subplots(1,2,figsize=(20, 6))
@@ -484,6 +500,52 @@ def plot_prediction_scores(scores):
         ax.set_ylabel(metric)
     plt.savefig('Figures/prediction_scores.png', dpi=300)
     plt.show()
+
+########## SOURCE ANALYSIS FUNCTIONS ##########
+
+def plot_nb_votes_per_source(df):
+    """ Plot the histogram of the number of votes per sources
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+    """
+    # Compute the number of votes per sources
+    votes_per_source = df.groupby(['Source', 'Year'])
+    votes_per_source = votes_per_source.size().reset_index()
+    median = np.median(votes_per_source[0])
+
+    # Plot the histogram of the number of votes per sources
+    fig, ax = plt.subplots(figsize=(10, 5))
+    sns.histplot(votes_per_source, x=0, hue='Year', multiple='stack', ax=ax, log_scale=(False, True), bins=100, palette='CMRmap')
+    ax.set_title('Histogram of the number of votes per sources and per year, median = {:.0f}'.format(median))
+    ax.set_xlabel('Number of votes')
+    ax.set_ylabel('Number of sources')
+    ax.set_xlim(0, np.max(votes_per_source[0]))
+    plt.savefig('Figures/hist_votes_per_source.png')
+    plt.show()
+
+def get_source_df(df):
+    """ Remove the sources with less than 3 votes (i.e. the median) and return the resulting dataframe
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+
+    Returns:
+        df (pd.DataFrame): Dataframe containing the data of the votes with the sources with less than 3 votes removed
+    """
+    # Compute the number of votes per sources
+    votes_per_source = df.groupby(['Source']).size()
+    median = np.median(votes_per_source)
+
+    # Get the sources with more than the median number of votes (i.e. more than 3 votes)
+    sources = votes_per_source[votes_per_source > median].index
+
+    # Get the dataframe with only the sources with more than 3 votes
+    df = df[df['Source'].isin(sources)]
+    return df
+
+
+
 
 
 ########## COMMENTS ANALYSIS FUNCTIONS ##########
@@ -1249,4 +1311,194 @@ def plot_accuracy_recall_precision_on_whole_years(df):
 
     # Show the plot
     plt.show()
+    
+    
+########## USER'S REVISION FUNCTIONS ##########
+def process_elections(dataset):
+    # Ensure 'Date' column is in datetime format
+    dataset['Date'] = pd.to_datetime(dataset['Date'], errors='coerce')
+
+    # Group by 'Target' and get the first vote's date and result for each election
+    result_df = dataset.groupby('Target').agg(
+        First_Vote_Date=('Date', 'first'),
+        Result=('Results', 'first')
+    ).reset_index()
+
+    # Extract year and month from the 'First_Vote_Date' column
+    result_df['Year_Month'] = result_df['First_Vote_Date'].dt.to_period('M')
+
+    return result_df
+
+def process_elections_ts(dataset):
+    # Ensure 'Date' column is in datetime format
+    dataset['Date'] = pd.to_datetime(dataset['Date'], errors='coerce')
+
+    dataset = dataset.sort_values(['Target', 'Round', 'Date'])
+    # Group by 'Target' and get the first vote's date and result for each election
+    result_df = dataset.groupby(['Target', 'Round']).agg(
+        First_Vote_Date=('Date', 'first'),
+        Result=('Results', 'first')
+    ).reset_index()
+
+    # Extract year and month from the 'First_Vote_Date' column
+    result_df['Year_Month'] = result_df['First_Vote_Date'].dt.to_period('M')
+
+    return result_df
+
+def generate_user_revision_dataset(revisions_dataset, election_dataset):
+    # Ensure 'month' and 'Date' columns are in datetime format
+    election_dataset['First_Vote_Date'] = pd.to_datetime(election_dataset['First_Vote_Date'], format='%Y-%m-%d')
+
+    # Create a DataFrame with 'user_name', 'month', and 'revisions'
+    result_df = pd.merge(revisions_dataset, election_dataset[['Target', 'First_Vote_Date', 'Result']], left_on='user_name', right_on='Target', how='left')
+    # Calculate the relative months based on each user's election date
+    result_df['Relative_Month'] = (result_df['month'].dt.year - result_df['First_Vote_Date'].dt.year) * 12 + result_df['month'].dt.month - result_df['First_Vote_Date'].dt.month
+    # Filter rows based on the -12 to 12 range
+    result_df = result_df[result_df['Relative_Month'].between(-12, 12, inclusive='both')]
+
+    # Pivot the DataFrame to have columns for each month
+    result_df_pivot = result_df.pivot_table(index='user_name', columns='Relative_Month', values='revisions', aggfunc='sum', fill_value=0)
+
+    # Rename the columns to represent months
+    result_df_pivot.columns = [f'Month_{m}' for m in result_df_pivot.columns]
+
+    # Add the 'Results' column to the resulting DataFrame
+    result_df_pivot['Result'] = result_df.groupby('user_name')['Result'].first()
+    return result_df_pivot
+
+def plot_average_edit(data, x, mean_col = 'center', var_cols = ['low', 'up']):
+
+    # Plot the evolution of the edit
+    fig, ax = plt.subplots(figsize=(12, 5))
+    sns.lineplot(x=x, y=mean_col, data=data, hue='Result', palette='tab10', ax=ax)
+    ax.fill_between(data[data.Result == -1][x], data[data.Result == -1][var_cols[0]], data[data.Result == -1][var_cols[1]], alpha=0.2, color='tab:blue')
+    ax.fill_between(data[data.Result == 1][x], data[data.Result == 1][var_cols[0]], data[data.Result == 1][var_cols[1]], alpha=0.2, color='tab:orange')
+    ax.set_ylabel('Mean edit')
+    ax.legend(handles=[plt.Line2D([0], [0], color='tab:blue', lw=4, label='Rejected'),
+                        plt.Line2D([0], [0], color='tab:orange', lw=4, label='Elected')])
+    return ax
+
+def revision_stat(dataset):
+    dataset = dataset.reset_index()
+    melted_df= dataset.melt(id_vars=['user_name', 'Result'], var_name='Month', value_name='Revisions')
+    result_stat = melted_df.groupby(['Result', 'Month'])['Revisions'].agg(
+    	mean=np.mean,
+    	confidence_interval=lambda x: list(stats.norm.interval(0.95, loc=np.mean(x), scale=stats.sem(x)))
+	).reset_index()
+    result_stat['Month'] = result_stat['Month'].str.extract(r'(-?\d+)').astype(int)
+    result_stat[['low', 'up']] = pd.DataFrame(result_stat['confidence_interval'].tolist())
+    result_stat = result_stat.drop('confidence_interval', axis=1)
+
+    return result_stat
+
+def create_df_causal(election, revision):
+
+  df = pd.DataFrame(columns=['Target','revisions','Result'])
+
+  for index, row in election.iterrows():
+
+    election_round = row['Round']
+    election_month = row['Year_Month']
+    election_target =  row['Target']
+    election_result = row['Result']
+
+    # Extract data for the specified time window before the election
+    time_window_start =  (election_month.to_timestamp() - pd.DateOffset(months=1)).to_period('M')
+    time_window_end =  election_month
+
+    revisions_data = revision[
+        (revision['user_name'] == election_target) &
+        (revision['month'] >= time_window_start) &
+        (revision['month'] < time_window_end)
+    ]
+
+    add =  pd.DataFrame({
+    'Target': [election_target],
+    'revisions': [revisions_data['revisions'].sum()],
+    'Result': [election_result]
+  })
+
+    df = pd.concat([df,add], ignore_index=True)
+
+  return df
+
+def compute_stat(ts, topk_dict):
+  ts['Year'] = ts['Year'].astype(int)
+  stats=pd.DataFrame()
+
+  for year, df in topk_dict.items():
+    filter_ts = ts[ts['Year']==year]
+    merged_df = pd.merge(df, filter_ts, on='Source', how='left')
+
+    merged_df.reset_index(drop=True, inplace=True)
+    grouped_df = merged_df.groupby(['Year', 'Community', 'Source'])
+
+    average_stats = grouped_df[['Voting_time', 'Vote_number']].mean().round(2).reset_index()
+
+    merged_df = merged_df.drop_duplicates(subset=['Source'])
+    average_stats = pd.merge(average_stats, merged_df[['Community', 'Source', 'revisions']], on=['Community', 'Source'], how='left')
+
+    stats=pd.concat([stats,average_stats], ignore_index=True)
+
+  stats = stats.sort_values(by=['Year', 'Community', 'revisions'], ascending=[True, True, False])
+  stats = stats.reset_index()
+  stats = stats.drop('index', axis=1)
+  return stats
+
+def create_df_Community_edit(com, edit, year):
+
+    filter = edit.groupby(['user_name','year'])['revisions'].sum()
+    df_filter = filter.reset_index()
+    df_filter.columns = ['user_name', 'year', 'revisions']
+
+    filter_Source = df_filter[df_filter['year']==year]
+    com['Source'] = com['Source'].str.replace('-source', '')
+    df_Community_edit = pd.merge(com, filter_Source[['user_name', 'revisions']], left_on='Source', right_on='user_name', how='left')
+    df_Community_edit = df_Community_edit.drop('user_name', axis=1)
+    return df_Community_edit
+
+def compute_stats_community(df_dict):
+
+  stats_dict = {}
+
+  for key in df_dict.keys():
+
+    agg_data = df_dict[key].groupby('Community')['revisions'].agg(['sum', 'mean', 'size']).reset_index()
+    agg_data['sum_normalized'] = agg_data['sum'] / agg_data['size']
+    agg_data = agg_data.drop('size', axis=1)
+    stats_dict[key] = agg_data
+
+  return stats_dict
+
+def compute_top_k(df_dict, k):
+  stats_dict = {}
+
+  for key in df_dict.keys():
+    # Calculate the top 10 user_name for each community
+    top_users_by_community = df_dict[key].groupby(['Community', 'Source'])['revisions'].sum().reset_index()
+    top_users_by_community = top_users_by_community.sort_values(by='revisions', ascending=False)
+    top_users_by_community = top_users_by_community.groupby('Community').head(k)
+    stats_dict[key] = top_users_by_community
+  return stats_dict
+
+def load_datasets_com(edit):
+    years = [2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013]
+    df_edit_year_dict = {}
+
+    for year in years:
+        # Assuming the CSV file naming convention is 'df_community_year.csv'
+        filename = f'df_community_{year}.csv'
+
+        try:
+            # Load CSV into Pandas DataFrame
+            df = pd.read_csv(filename)
+
+            df_edit = create_df_Community_edit(df, edit, year)
+            # Append to the list
+            df_edit_year_dict[year] = df_edit
+        except FileNotFoundError:
+            # Handle the case where the file is not found
+            print(f"File {filename} not found. Skipping.")
+
+    return df_edit_year_dict
 ################### End #####################
