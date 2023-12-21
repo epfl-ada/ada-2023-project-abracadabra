@@ -42,7 +42,7 @@ def data_parsing(path = 'wiki-RfA.txt'):
         df (pd.DataFrame): Dataframe containing the data of the votes
     """
     # Read the file into a list of lines
-    with open(path, 'r') as file:
+    with open(path, 'r', encoding = 'utf8') as file:
         lines = file.readlines()
 
     # Create a list of dictionaries, where each dictionary represents a record
@@ -1148,6 +1148,7 @@ def compute_df_recall_accuracy_precision(df_ref, df_com_year_, year):
     accuracy = []
     recall = []
     precision = []
+    specificity = []
     #loop over all communities of this year
     for n in range (df_com_year_['Community'].max()+1):
         com = list(source_per_com[n].values)
@@ -1163,19 +1164,22 @@ def compute_df_recall_accuracy_precision(df_ref, df_com_year_, year):
         if (TP == 0 & FN == 0) : recall_ = 0
         else: recall_ = TP / (TP + FN)
         precision_ = TP / (TP + FP)
+        specificity_ = TN/(TN+FN)
         accuracy.append(accuracy_)
         recall.append(recall_)
         precision.append(precision_)
+        specificity.append(specificity_)
     
     #create the df
     years_ = [int(year)]*(df_com_year_['Community'].max()+1)
     com = list(range(df_com_year_['Community'].max()+1))
-    df_stat_com = pd.DataFrame(columns=['Year', 'Com_nbr', 'Accuracy', 'Precision', 'Recall'])
+    df_stat_com = pd.DataFrame(columns=['Year', 'Com_nbr', 'Accuracy', 'Precision', 'Recall', 'Specificity'])
     df_stat_com['Year'] = years_
     df_stat_com['Com_nbr'] = com
     df_stat_com['Accuracy'] = accuracy
     df_stat_com['Precision'] = precision
     df_stat_com['Recall'] = recall
+    df_stat_com['Specificity'] = specificity
    
     return df_stat_com
 
@@ -1186,7 +1190,7 @@ def plot_recall_accuracy_precision_per_com(df, years):
         year (list): Specific years on which we want our plot
     """
     # Transform the df in an appropriate form
-    df_melt = pd.melt(df[df['Year'].isin(years)], id_vars=['Com_nbr', 'Year'], value_vars=['Accuracy', 'Precision', 'Recall'],
+    df_melt = pd.melt(df[df['Year'].isin(years)], id_vars=['Com_nbr', 'Year'], value_vars=['Accuracy', 'Precision', 'Recall', 'Specificity'],
                         var_name='Stat', value_name='Pourcentage')
 
     # Create the plot
@@ -1194,11 +1198,11 @@ def plot_recall_accuracy_precision_per_com(df, years):
 
     # Add labels and title
     g.set_axis_labels('Community', 'Proportion')
-    g.fig.suptitle('Accuracy, Recall and Precision per community and per year', y=1.02)
+    g.fig.suptitle('Accuracy, Recall, Precision and Specificity per community and per year', y=1.02)
 
     # Move legend to below the graph
     g.fig.subplots_adjust(bottom=0.2)
-    sns.move_legend(g, "upper center", bbox_to_anchor=(.5, 0.1), ncol=3, title=None, frameon=False)
+    sns.move_legend(g, "upper center", bbox_to_anchor=(.5, 0.1), ncol=4, title=None, frameon=False)
 
     # Show the plot
     plt.show()
