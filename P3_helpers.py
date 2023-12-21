@@ -913,6 +913,8 @@ def plot_connected_with_topic(nodes, edges, model, y_offset=0.2):
     for node in nodes:
         plt.text(int(node[0]), int(node[1])+y_offset, f"T-{node[3]}-{node[4]}", color='orange', alpha=1, ha='center')
     plt.show()
+
+
 ################### Community on bipartite graph #####################
 
 def create_bipartite_weight(sources, targets, weights):
