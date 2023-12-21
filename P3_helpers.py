@@ -9,6 +9,20 @@ from tqdm import tqdm
 import ast
 import json
 import os
+import re
+
+import vaderSentiment
+import spacy, nltk, gensim, sklearn
+import pyLDAvis.gensim_models
+import re
+
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from sklearn.feature_extraction.text import CountVectorizer
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from textblob import TextBlob
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from nltk.corpus import stopwords
 
 from sklearn.neighbors import KernelDensity
 from sklearn.ensemble import GradientBoostingClassifier
@@ -249,7 +263,7 @@ def compute_rounds(data, round_threshold):
 
 
 ########## VOTE EVOLUTION FUNCTIONS ##########
-def pdf_voting_time(df):
+def pdf_voting_time(df, plot=None):
     """ Plot the probability density function of the voting time
 
     Args:
@@ -262,10 +276,14 @@ def pdf_voting_time(df):
     ax.set_xlabel('Voting time in the round (hours)')
     ax.set_ylabel('Percentage of votes')
     ax.set_xlim(0, 24*8)
-    plt.savefig('Figures/distribution_voting_time.png', dpi=300)
-    plt.show()
+    if plot is None:
+        plt.savefig('Figures/pdf_voting_time.png', dpi=300)
+        plt.show()
+    else:
+        plt.savefig('Figures/pdf_voting_time_' + plot + '.png', dpi=300)
+        plt.close()
 
-def cdf_voting_time(df):
+def cdf_voting_time(df, plot=None):
     """ Plot the cumulative distribution function of the voting time
 
     Args:
@@ -278,9 +296,12 @@ def cdf_voting_time(df):
     ax.set_xlabel('Voting time in the round (hours)')
     ax.set_ylabel('Percentage of votes')
     ax.set_xlim(np.min(data.Voting_time), np.min(data.groupby('Year').Voting_time.max()))
-    plt.savefig('Figures/cdf_voting_time.png', dpi=300)
-    plt.show()
-
+    if plot is None:
+        plt.savefig('Figures/cdf_voting_time.png', dpi=300)
+        plt.show()
+    else:
+        plt.savefig('Figures/cdf_voting_time_' + plot + '.png', dpi=300)
+        plt.close()
 
 def get_progressive_mean(df):
     """ Compute the progressive mean of the votes in each round (i.e. the mean of the votes at each time step)
@@ -412,7 +433,7 @@ def get_confidence_interval(grouper, on):
     return ci
 
 # Scatter plot of the progressive mean by voting time and vote number
-def plot_time_distribution(df, x):
+def plot_time_distribution(df, x, plot=None):
     """ Plot the distribution of the progressive mean over time
 
     Args:
@@ -441,8 +462,13 @@ def plot_time_distribution(df, x):
         axes[0].set_xlabel('Number of votes casted')
         axes[1].set_xlabel('Number of votes casted')
         fig.suptitle('Histogram of the progressive mean over the number of votes casted')
-    plt.savefig('Figures/hist_progressive_mean_over_' + x.lower() + '.png', dpi=300)
-    plt.show()
+    
+    if plot is None:
+        plt.savefig('Figures/hist_progressive_mean_over_' + x.lower() + '.png', dpi=300)
+        plt.show()
+    else:
+        plt.savefig('Figures/hist_progressive_mean_over_' + x.lower() + '_' + plot + '.png', dpi=300)
+        plt.close()
 
 def predict_results(df, n_first_votes, n_folds):
     """ Predict the results of the votes using the progressive mean of the votes in each round
@@ -481,7 +507,7 @@ def early_vote_prediction(df, n_first_votes, n_folds=10):
     scores.reset_index(inplace=True)
     return scores
 
-def plot_prediction_scores(scores):
+def plot_prediction_scores(scores, plot=None):
     """ Plot the scores of the results prediction over different quantities of first votes
 
     Args:
@@ -498,12 +524,17 @@ def plot_prediction_scores(scores):
         ax.set_title(metric + ' of the prediction')
         ax.set_xlabel('Number of first votes')
         ax.set_ylabel(metric)
-    plt.savefig('Figures/prediction_scores.png', dpi=300)
-    plt.show()
+
+    if plot is None:
+        plt.savefig('Figures/prediction_scores.png', dpi=300)
+        plt.show()
+    else:
+        plt.savefig('Figures/prediction_scores_' + plot + '.png', dpi=300)
+        plt.close()
 
 ########## SOURCE ANALYSIS FUNCTIONS ##########
 
-def plot_nb_votes_per_source(df):
+def plot_nb_votes_per_source(df, plot=None):
     """ Plot the histogram of the number of votes per sources
 
     Args:
@@ -521,8 +552,12 @@ def plot_nb_votes_per_source(df):
     ax.set_xlabel('Number of votes')
     ax.set_ylabel('Number of sources')
     ax.set_xlim(0, np.max(votes_per_source[0]))
-    plt.savefig('Figures/hist_votes_per_source.png')
-    plt.show()
+    if plot is None:
+        plt.savefig('Figures/hist_votes_per_source.png')
+        plt.show()
+    else:
+        plt.savefig('Figures/hist_votes_per_source_' + plot + '.png')
+        plt.close()
 
 def get_source_df(df):
     """ Remove the sources with less than 3 votes (i.e. the median) and return the resulting dataframe
@@ -544,6 +579,65 @@ def get_source_df(df):
     df = df[df['Source'].isin(sources)]
     return df
 
+def plot_mean_std_time(df, plot=None):
+    """ Plot the distribution of the mean and standard deviation of voting time per source
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+    """
+    # Remove the source 
+    data = df.copy()
+    data.Voting_time = time_to_float(data.Voting_time)
+    means = data.groupby(['Source', 'Year'])['Voting_time'].mean().reset_index()
+    stds = data.groupby(['Source', 'Year'])['Voting_time'].std().reset_index()
+    
+    fig, ax = plt.subplots(1, 2, figsize=(15, 5))
+    sns.histplot(data=means, x='Voting_time', hue='Year', ax=ax[0], palette='CMRmap', multiple='stack')
+    ax[0].set_title('Mean voting time')
+    sns.histplot(data=stds, x='Voting_time', hue='Year', ax=ax[1], palette='CMRmap', multiple='stack')
+    ax[1].set_title('Standard deviation of voting time')
+    fig.suptitle('Distribution of the mean and standard deviation of voting time per source')
+    if plot is None:
+        plt.savefig('Figures/mean_std_time.png')
+        plt.show()
+    else:
+        plt.savefig('Figures/mean_std_time_' + plot + '.png')
+        plt.close()
+        
+
+########## TIME SERIES AND SOURCE ANALYSIS ON COMMUNITY FUNCTIONS ##########
+def add_comm_to_df(df):
+    """Add the community column to the dataframe
+
+    Args:
+        df (DataFrame): DataFrame with the votes
+
+    Returns:
+        DataFrame: DataFrame with the votes and the community column
+    """
+    years = [2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013]
+    df_by_year = pd.DataFrame()
+
+    for year in years:
+        # Assuming the CSV file naming convention is 'df_community_year.csv'
+        filename = f'df_community_{year}.csv'
+
+        try:
+            # Load CSV into Pandas DataFrame
+            df_comm = pd.read_csv(filename)
+            # Remove the word '-source' from the Source column
+            df_comm.Source = df_comm.Source.str.replace('-source', '')
+
+            # Add the community column to the dataframe
+            df_year = df[df['Year'] == year]
+            df_year = df_year.merge(df_comm, how='left', left_on='Source', right_on='Source')          
+                        
+        except FileNotFoundError:
+            # Handle the case where the file is not found
+            print(f"File {filename} not found. Skipping.")
+
+        df_by_year = pd.concat([df_by_year, df_year])
+    return df_by_year
 
 
 
@@ -783,7 +877,7 @@ def plot_graph_jsim(G):
     
     return
 
-################### Community on bipartite graph #####################
+################### GENERATE COMMUNITY FROM BIPARTITE GRAPH #####################
 
 def create_bipartite_weight(sources, targets, weights):
     """ Create a bipartite weighted graph 
@@ -1327,6 +1421,7 @@ def plot_accuracy_recall_precision_on_whole_years(df):
     
     
 ########## USER'S REVISION FUNCTIONS ##########
+    
 def process_elections(dataset):
     # Ensure 'Date' column is in datetime format
     dataset['Date'] = pd.to_datetime(dataset['Date'], errors='coerce')
@@ -1514,4 +1609,201 @@ def load_datasets_com(edit):
             print(f"File {filename} not found. Skipping.")
 
     return df_edit_year_dict
+
+
+########## SENTIMENT ANALYSIS FUNCTIONS ##########
+
+def removing_comment_headers(df):
+    df_sentiment = df.copy()
+
+    support_pattern = re.compile(r'^\bsupport\w*\b', flags=re.IGNORECASE)
+    df_sentiment["Parsed_Comment"] = df_sentiment["Parsed_Comment"].str.replace(support_pattern, '', regex=True)
+    neutral_pattern = re.compile(r'^\bneutral\w*\b', flags=re.IGNORECASE)
+    df_sentiment["Parsed_Comment"] = df_sentiment["Parsed_Comment"].str.replace(neutral_pattern, '', regex=True)
+    oppose_pattern = re.compile(r'^\boppose\w*\b', flags=re.IGNORECASE)
+    df_sentiment["Parsed_Comment"] = df_sentiment["Parsed_Comment"].str.replace(oppose_pattern, '', regex=True)
+    
+    return df_sentiment
+
+
+def sentiment_analysis(df):
+    analyzer = SentimentIntensityAnalyzer()
+    df["sent_score"] = [analyzer.polarity_scores(sent)['compound'] for sent in df["Parsed_Comment"]]
+    
+    return df
+
+
+def plot_compound_sentiment_score(df):
+
+    fig, axs = plt.subplots(1, 1, figsize=(10, 4))
+
+    axs.hist(df["sent_score"], bins=15)
+    axs.set_xlim([-1, 1])
+    axs.set_ylim([0, 195647])
+    axs.set_xlabel('Compound sentiment')
+    axs.set_ylabel('Number of comments')
+    axs.set_title('Compound sentiment scores')
+    
+    
+def pieChart_perYear_sentiment_score(df):
+
+    pos_comments = df[df['sent_score'] >= 0.05].groupby('Year')['sent_score'].count().to_frame()
+    neg_comments = df[df['sent_score'] <-0.05].groupby('Year')['sent_score'].count().to_frame()
+    neu_comments = df[(df['sent_score'] > -0.05) & (df['sent_score'] < 0.05)].groupby('Year')['sent_score'].count().to_frame()
+
+    comment_sentiment_count = pd.DataFrame()
+    comment_sentiment_count["pos_comments"] = pos_comments
+    comment_sentiment_count["neg_comments"] = neg_comments
+    comment_sentiment_count["neu_comments"] = neu_comments
+    
+    sns.set(style="whitegrid")
+    plt.figure(figsize=(100, 50))
+
+    for i in range(len(comment_sentiment_count)):
+        plt.subplot(4, 3, i+1)
+        year_data = comment_sentiment_count.iloc[i]
+        plt.pie(year_data, labels=year_data.index, autopct='%1.1f%%', startangle=90, textprops={'fontsize': 50})
+        plt.title(f'Year {int(comment_sentiment_count.index[i])}', fontsize=70)
+
+    plt.tight_layout()
+    plt.show()
+    
+
+def comment_vectorizing(df):
+    vectorizer = CountVectorizer(stop_words='english')
+    df['Vectorized_Comment'] = df['Parsed_Comment'].apply(lambda x: vectorizer.build_analyzer()(x)) 
+    df['Vector_Size'] = df['Vectorized_Comment'].apply(lambda x: len(x))
+    
+    return df
+
+
+def print_vectorized_comment_stats(df):
+
+    print('The minimun length of the comment is: ', np.min(df['Vector_Size']))
+    print('The maximum length of the comment is: ', np.max(df['Vector_Size']))
+
+    proportion_no_comment=np.sum(df['Vector_Size']==0)/len(df['Vector_Size'])*100
+    print('The percentage of vote without comment is: ', proportion_no_comment)
+    proportion_one_word=np.sum(df['Vector_Size']==1)/len(df['Vector_Size'])*100
+    print('The percentage of comment with one word is: ', proportion_one_word)
+    proportion_two_word=np.sum(df['Vector_Size']==2)/len(df['Vector_Size'])*100
+    print('The percentage of comment with 2 words is: ', proportion_two_word)
+    
+    
+def sentiment_remove_vectorSize_zero(df):
+    df = df[df["Vector_Size"] != 0]
+    
+    return df
+
+
+def com_vote_sentiment_analysis(df_ref, df_com_year_, year):
+    #filter the ref df
+    df_ref_year = df_ref[df_ref['Year']==int(year)]
+    #extract the source for the community df for 1 year
+    source_per_com = df_com_year_.groupby('Community').apply(lambda x : x['Source'])
+    pos_vote_prop = []
+    neg_vote_prop = []
+    neu_vote_prop = []
+    pos_sentScore_prop = []
+    neg_sentScore_prop = []
+    neu_sentScore_prop = []
+    
+    #loop over all communities of this year
+    for n in range (df_com_year_['Community'].max()+1):
+        com = list(source_per_com[n].values)
+        #extract rows of the ref df based on the source which are in the community n
+        df_com = df_ref_year[df_ref_year['Source'].isin(com)].reset_index(drop=True)
+        #extract proportion for theses sources
+        prop_vote_pos_com = np.sum(df_com['Vote']==1)/len(df_com['Vote'])
+        prop_vote_neg_com = np.sum(df_com['Vote']==-1)/len(df_com['Vote'])
+        prop_vote_neu_com = np.sum(df_com['Vote']==0)/len(df_com['Vote'])
+        prop_sentScore_pos_com = sum(np.array(df_com['sent_score']>=0.05))/len(df_com['sent_score'])
+        prop_sentScore_neg_com = sum(np.array(df_com['sent_score']<-0.05))/len(df_com['sent_score'])
+        prop_sentScore_neu_com = sum(np.abs(df_com['sent_score'])<0.05)/len(df_com['sent_score'])
+        pos_vote_prop.append(prop_vote_pos_com)
+        neg_vote_prop.append(prop_vote_neg_com)
+        neu_vote_prop.append(prop_vote_neu_com)
+        pos_sentScore_prop.append(prop_sentScore_pos_com)
+        neg_sentScore_prop.append(prop_sentScore_neg_com)
+        neu_sentScore_prop.append(prop_sentScore_neu_com)
+    #create the df
+    years_ = [int(year)]*(df_com_year_['Community'].max()+1)
+    com = list(range(df_com_year_['Community'].max()+1))
+    df_stat_com = pd.DataFrame(columns=['Year', 'Com_nbr', 'Pos_vote_prop', 'Neg_vote_prop', 'Neu_vote_prop', 'Pos_sentScore_prop', 'Neg_sentScore_prop', 'Neu_sentScore_prop'])
+    df_stat_com['Year'] = years_
+    df_stat_com['Com_nbr'] = com
+    df_stat_com['Pos_vote_prop'] = pos_vote_prop
+    df_stat_com['Neg_vote_prop'] = neg_vote_prop
+    df_stat_com['Neu_vote_prop'] = neu_vote_prop
+    df_stat_com['Pos_sentScore_prop'] = pos_sentScore_prop
+    df_stat_com['Neg_sentScore_prop'] = neg_sentScore_prop
+    df_stat_com['Neu_sentScore_prop'] = neu_sentScore_prop
+    
+    return df_stat_com
+
+
+def community_sentiment_analysis_per_year(df):
+
+    years = df['Year'].unique()
+    df_com = pd.DataFrame(columns = ['Year', 'Community_df'])
+    for year in years:
+        path = 'Community/df_community_'+ str(int(year)) + '.csv'
+        df_ = load_com_csv(path)
+        df_com.loc[len(df_com)] = [year, df_]
+
+    df_com_stat = pd.DataFrame(columns = ['Year'])
+    df_com_stat['Year'] = years
+
+    list_nbr_com = df_com['Community_df'].apply(lambda x: x['Community'].max()+1)
+    df_com_stat['Nbr_of_com'] = list_nbr_com
+
+    list_nbr_in_com_ = df_com['Community_df'].apply(lambda x: x.groupby('Community').size())
+    df_com_stat['Com_size'] = list(list_nbr_in_com_.values)
+    #remove nan values when the number of community is lower
+    list_nbr_in_com_filtered = df_com_stat['Com_size'].apply(lambda x: x[~np.isnan(x)])
+    df_com_stat['Com_size'] = list_nbr_in_com_filtered
+    df_com_stat
+
+    years = df['Year'].unique()
+    dict_com = {}
+    for year in years:
+        path = 'Community/df_community_'+ str(int(year)) + '.csv'
+        df_ = load_com_csv(path)
+        dict_com[str(int(year))]=df_
+
+    df_stat_com = pd.DataFrame(columns=['Year', 'Com_nbr', 'Pos_vote_prop', 'Neg_vote_prop', 'Neu_vote_prop', 'Pos_sentScore_prop', 'Neg_sentScore_prop', 'Neu_sentScore_prop'])
+    for year in dict_com.keys():
+        df_com_year = dict_com[str(year)]
+        stat_com = com_vote_sentiment_analysis(df, df_com_year, year)
+        df_stat_com = pd.concat([df_stat_com, stat_com], ignore_index=True)
+        
+    return df_stat_com
+
+
+
+def plot_dist_sentScore_per_com(df, years):
+    # Melt the DataFrame to make it suitable for Seaborn
+    df_melt = pd.melt(df[df['Year'].isin(years)], id_vars=['Com_nbr', 'Year'], value_vars=['Pos_sentScore_prop', 'Neg_sentScore_prop', 'Neu_sentScore_prop'],
+                        var_name='Type of sentiment', value_name='Pourcentage')
+
+    # Create a facet grid with a separate plot for each year
+    g = sns.catplot(x='Com_nbr', y='Pourcentage', hue='Type of sentiment', col='Year', data=df_melt, kind='bar', palette='colorblind')
+
+    # Add labels and title
+    g.set_axis_labels('Community', 'SentScore percentage')
+    g.fig.suptitle('Vote percentage per community and per year', y=1.02)
+
+    # Move legend to below the graph
+    g.fig.subplots_adjust(bottom=0.2)
+    sns.move_legend(g, "upper center", bbox_to_anchor=(.5, 0.1), ncol=3, title=None, frameon=False)
+
+    # Show the plot
+    plt.show()
+    
+
+
+
+
+   
+
 ################### End #####################
