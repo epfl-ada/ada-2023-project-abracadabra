@@ -19,7 +19,6 @@ In this study, we would like to answer these questions:
 - How an open, debated voting system can wield influence and shape collective decisions ? 
 - How does a user's social network within Wikipedia influence their decision to vote for adminship?
 - How can we find relationships of influence in a vote such as wikipedia RfA?
-- Comment faire un site qui marche ? 
 
 ## Additional dataset :
 Not all of the following datasets have been found for the moment, but they remain potential sources for future analysis, which is why we have included them below. 
