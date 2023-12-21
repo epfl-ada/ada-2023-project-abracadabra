@@ -17,6 +17,7 @@ from sklearn.model_selection import GroupKFold
 
 import mwparserfromhell
 from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
 from gensim import corpora, models
 from gensim.parsing.preprocessing import STOPWORDS
 STOPWORDS = list(STOPWORDS)
@@ -559,6 +560,7 @@ def tokenize_one_comment(comment):
 
 def get_bow_column(tokenized_column, stopwords=True, ponctuation=True, fine_tune_stopwords=True):
     tokenized_comments = tokenized_column.tolist()
+    tokenized_comments = lemmatize_comments(tokenized_comments)
     if stopwords:
         tokenized_comments = remove_stopwords(tokenized_comments)
     if ponctuation:
@@ -572,6 +574,14 @@ def get_bow_column(tokenized_column, stopwords=True, ponctuation=True, fine_tune
 #For Pipeline
 def tokenize_comments(comments_series):
     return [word_tokenize(comment.lower()) for comment in comments_series.tolist()]
+
+def lemmatize_comments(tokenized_comments):
+    lemmatizer = WordNetLemmatizer()
+    outputs = []
+    for comment in tokenized_comments:
+        out = [lemmatizer.lemmatize(token) for token in comment]
+        outputs.append(out)
+    return outputs
 
 def get_dict_representation(tokenized_comments):
     return corpora.Dictionary(tokenized_comments)
@@ -599,8 +609,13 @@ def get_LDA_topics(lda_model, num_words=10):
     return lda_model.print_topics(num_words=num_words)
 
 #Pipeline
-def get_LDA_model(comments_series, num_topics=3, passes=10, stopwords=True, ponctuation=True, fine_tune_stopwords=True):
+def get_LDA_model(comments_series, num_topics=3, passes=10,
+                  stopwords=True, ponctuation=True, fine_tune_stopwords=True,
+                  lemmatize=False):
+    
     tokenized_comments = tokenize_comments(comments_series)
+    if lemmatize:
+        tokenized_comments = lemmatize_comments(tokenized_comments)
     if stopwords:
         tokenized_comments = remove_stopwords(tokenized_comments)
     if ponctuation:
@@ -691,9 +706,95 @@ def get_topic_stat(df_top_stat, nb_topics, topic_positions):
             df_top_stat[f'Topics_from_{t_number}_'+pos+'_topic_prob'] = df_top_stat[f'Topics_from_{t_number}'].apply(lambda x: mappprob_from_list(x, i, 1))
     return df_top_stat
 
+################### Community Analysis Functions #####################
+
+def load_communities_dict_for_topic(path_dir='./community_anal_dfs/'):
+    community_dict = {}
+    for filename in os.listdir(path_dir):
+        df = pd.read_csv(path_dir + filename)
+        df.Source = df.Source.apply(lambda x: x.split('-')[0])
+        community_dict[filename[-8:-4]] = df    
+    return community_dict
+
+def join_left_com_top(df_with_top_lem, communities_dcit):
+    output_dict= {}
+    for key, value in communities_dcit.items():
+        df_to_merge = df_with_top_lem[df_with_top_lem['Year']==int(key)]
+        df_merged = pd.merge(df_to_merge, value, how='left', on='Source')
+        df_merged = df_merged[~df_merged.Community.isnull()]
+        cur_communities = df_merged.Community.unique()
+        output_dict[key] = {}
+        for com in cur_communities:
+            temp = df_merged[df_merged.Community == com]
+            output_dict[key][com] = temp[['Source', 'BoW', 'Topics_from_3',
+                                               'Topics_from_5', 'Topics_from_7',
+                                               'Topics_from_9']]
+    return output_dict
+
+def get_src_sets_from_com_dict(com_dict):
+    src_sets_dict = {}
+    for year, df in com_dict.items():
+        commu_possible = df.Community.unique()
+        src_sets_dict[year] = {}
+        for cur_commu in commu_possible:
+            src_sets_dict[year][cur_commu] = set(df[df.Community == cur_commu].Source)
+    return src_sets_dict
+
+def jacquard_similarity(src_sets_dict, year1, year2):
+    src_sets1 = src_sets_dict[year1]
+    src_sets2 = src_sets_dict[year2]
+    jacquard_sim = {}
+    jacquard_sim_this_year = {}
+    for com1, src_set1 in src_sets1.items():
+        jacquard_sim_this_year[com1] = {}
+        for com2, src_set2 in src_sets2.items():
+            jacquard_sim_this_year[com1][com2] = len(src_set1.intersection(src_set2)) / len(src_set1.union(src_set2))
+    jacquard_sim.update(jacquard_sim_this_year)
+    return jacquard_sim
+
+def jacquard_similarity_for_all_years(src_sets_by_comu_by_year, years_list):
+    jacquard_similarities = {}
+    for i,year in enumerate(years_list):
+        year = int(year) 
+        if i < len(years_list)-1:
+            jacquard_similarities[f"{year}-{year+1}"] = jacquard_similarity(src_sets_by_comu_by_year, str(year), str(year+1))
+    return jacquard_similarities
+
+def max_jacquard_sim(jacquard_similarities):
+    max_sim = {}
+    for year, sim_dict in jacquard_similarities.items():
+        max_sim[year] = {}
+        for com1, sim_dict in sim_dict.items():
+            key_max, value_max = max(sim_dict.items(), key=lambda x: x[1])
+            max_sim[year][com1] = (key_max, round(value_max,3))
+    return max_sim
+
+def edge_format_for_jsim(max_sim):
+    ... 
+
+def get_directed_graph_for_jsim(network):
+    G = nx.DiGraph()
+    for layer, connections in network.items():
+        for node, (next_node, weight) in connections.items():
+            G.add_edge((layer.split('-')[0], node), (layer.split('-')[1], next_node), weight=weight)
+    return G
+
+def plot_graph_jsim(G):
+    
+    return
+
 ################### Community on bipartite graph #####################
 
 def create_bipartite_weight(sources, targets, weights):
+    """ Create a bipartite weighted graph 
+    Args:
+        sources (list): list of Source name 
+        targets (list): list of Target name
+        weights (list): list of weight, either 0, 1 or -1 corresponding to the vote of the source for the target
+    Returns:
+        G (nx.Graph): bipartite graph created
+    """
+    
     #create bipartite graph
     G = nx.Graph()
     for i in range (len(sources)):
@@ -703,6 +804,12 @@ def create_bipartite_weight(sources, targets, weights):
     return G
 
 def create_bipartite_weight_from_df(df):
+    """" Create a bipartite weighted graph for one specific year
+    Args:
+        df (pd.Dataframe): Bipartite network containing source and target
+    Returns:
+        G (nx.Graph): bipartite graph created
+    """
     #Extract source, target, weight
     sources = list(df['Source'])
     targets = list(df['Target'])
@@ -718,6 +825,13 @@ def create_bipartite_weight_from_df(df):
     return G
 
 def create_bipartite_weight_from_df_year(df, year):
+    """ Create a bipartite weighted graph for one specific year
+    Args:
+        df (pd.Dataframe): Bipartite network containing source and target
+        year (float): a specific year on which the graph needs to be built on
+    Returns:
+        G (nx.Graph): bipartite graph created
+    """
     #Take data from the year
     df_year= df[df['Year']==year]
 
@@ -736,6 +850,13 @@ def create_bipartite_weight_from_df_year(df, year):
     return G
 
 def shared_neighbors_count(G, u, v):
+    """ Count the number of neighbor (same target in network G and same weight) in common for node u and v
+    Args:
+        G (nx.Graph): Bipartite network containing source and target
+        u, v: specific node of the graph
+    Returns:
+        len (int): number of shared neighbors
+    """
     #Check if nodes u and v belong to the same side of the bipartite graph
     if G.nodes[u]['bipartite'] != G.nodes[v]['bipartite']:
         raise ValueError("Nodes should belong to the same side of the bipartite graph.")
@@ -743,7 +864,7 @@ def shared_neighbors_count(G, u, v):
     #Select the other part of the graph
     other_side = 1 - G.nodes[u]['bipartite']
 
-    #u and v neighbor from the othe rpart of the graph
+    #u and v neighbor from the other part of the graph
     neighbors_u = set(n for n in G.neighbors(u) if G.nodes[n]['bipartite'] == other_side)
     neighbors_v = set(n for n in G.neighbors(v) if G.nodes[n]['bipartite'] == other_side)
 
@@ -760,3 +881,430 @@ def extract_community_from_projected_graph(projected_G):
     com_dict = community.best_partition(projected_G)
     df_com = pd.DataFrame(list(com_dict.items()), columns=['Source', 'Community'])
     return df_com
+
+################### Community analysis #####################
+
+def load_com_csv(file_path):
+    """ Load a csv file
+    Args:
+        file_path (string): path to the csv file to load
+    Returns:
+        df_com (pd.DataFrame): Dataframe containing the elements in our csv file
+    """
+    #load the file
+    df_com = pd.read_csv(file_path)
+    #remove the -source in each source name
+    df_com['Source'] = df_com['Source'].str.replace('-source', '')
+    
+    return df_com
+
+def compute_df_size_com (df_com, years):
+    """ Compute the number of community per year, size and size proportion compared to all sources voting that year, for each community and each year
+    Args:
+        df_com (pd.DataFrame): Dataframe containing for each year a dataframe which matches for each source a community number
+        years (list): years of interest
+    Returns:
+        df_com_stat (pd.DataFrame): DataFrame of the stat computed (nbr of community, community size, community proportion size)
+    """
+    #create our output df
+    df_com_stat = pd.DataFrame(columns = ['Year'])
+    df_com_stat['Year'] = years
+
+    #compute the number of community and add it to the output df
+    list_nbr_com = df_com['Community_df'].apply(lambda x: x['Community'].max()+1)
+    df_com_stat['Nbr_of_com'] = list_nbr_com
+
+    #compute the number of source in each community and add it to the output df
+    list_nbr_in_com_ = df_com['Community_df'].apply(lambda x: x.groupby('Community').size())
+    df_com_stat['Com_size'] = list(list_nbr_in_com_.values)
+
+    #remove nan values when the number of community is 0
+    list_nbr_in_com_filtered = df_com_stat['Com_size'].apply(lambda x: x[~np.isnan(x)])
+    df_com_stat['Com_size'] = list_nbr_in_com_filtered
+
+    #compute the size proportion in each community compared to the tot number of source for that year
+    df_com_stat['Source_prop'] = df_com_stat['Com_size'].apply(lambda x: np.round(np.array(x) / np.sum(x), 3))
+    return df_com_stat
+
+def compute_df_source_prop_for_plot(df):
+    """ Transform the df so that it is suitable for a plot
+    Args:
+        df (pd.DataFrame): Dataframe needing to be transformed
+    Returns:
+        df_result (pd.DataFrame): DataFrame transformed
+    """
+    df_expanded = df.apply(lambda row: pd.Series(row['Source_prop']), axis=1)
+
+    # Add the column 'Year' to the new df
+    df_expanded['Year'] = df['Year']
+
+    # Rename the column to include 'Com_nbr'
+    df_expanded.columns = [i if i != 'Year' else i for i in df_expanded.columns]
+
+    # Use melt to reorganise the df
+    df_result = pd.melt(df_expanded, id_vars=['Year'], var_name='Com_nbr', value_name='Source_prop')
+
+    # Sort the results
+    df_result = df_result.sort_values(by=['Year', 'Com_nbr']).reset_index(drop=True)
+    df_result = df_result.dropna()
+    return df_result
+
+def plot_source_prop(df_result, year):
+    """ Plot source proportion for each community and for specific years
+    Args:
+        df_result (pd.DataFrame): Dataframe containing the values to plot
+        year (list): Specific years on which we want our plot
+    """
+
+    # Create the plot
+    g = sns.catplot(x='Com_nbr', y='Source_prop', hue='Com_nbr', col='Year', data=df_result[df_result['Year'].isin(year)], kind='bar', palette='colorblind')
+
+    # Add labels and title
+    g.set_axis_labels('Community', 'Size proportion')
+    g.fig.suptitle('Size proportion per community and per year', y=1.02)
+
+    # Move legend to below the graph
+    g.fig.subplots_adjust(bottom=0.2)
+    sns.move_legend(g, "upper center", bbox_to_anchor=(.5, 0.1), ncol=6, title=None, frameon=False)
+
+    # Show the plot
+    plt.show()
+
+def com_vote(df_ref, df_com_year_, year):
+    """ Compute the vote proportion for each vote type for each community and each year
+    Args:
+        df_ref (pd.DataFrame): Dataframe of reference, from which we will extract
+        df_com_year (pd.DataFrame): Dataframe of the matching of sources with their community number for a year
+        year (float): year of corresponding to the df_com_year
+    Returns:
+        df_com_stat (pd.DataFrame): DataFrame of the stat computed 
+    """
+
+    #filter the ref df
+    df_ref_year = df_ref[df_ref['Year']==int(year)]
+    #extract the source for the community df for 1 year
+    source_per_com = df_com_year_.groupby('Community').apply(lambda x : x['Source'])
+    pos_vote_prop = []
+    neg_vote_prop = []
+    neu_vote_prop = []
+    #loop over all communities of this year
+    for n in range (df_com_year_['Community'].max()+1):
+        com = list(source_per_com[n].values)
+        #extract rows of the ref df based on the source which are in the community n
+        df_com = df_ref_year[df_ref_year['Source'].isin(com)].reset_index(drop=True)
+        #extract proportion for theses sources
+        prop_vote_pos_com = np.sum(df_com['Vote']==1)/len(df_com['Vote'])
+        prop_vote_neg_com = np.sum(df_com['Vote']==-1)/len(df_com['Vote'])
+        prop_vote_neu_com = np.sum(df_com['Vote']==0)/len(df_com['Vote'])
+        pos_vote_prop.append(prop_vote_pos_com)
+        neg_vote_prop.append(prop_vote_neg_com)
+        neu_vote_prop.append(prop_vote_neu_com)
+    
+    #create the df
+    years_ = [int(year)]*(df_com_year_['Community'].max()+1)
+    com = list(range(df_com_year_['Community'].max()+1))
+    df_stat_com = pd.DataFrame(columns=['Year', 'Com_nbr', 'Pos_vote_prop', 'Neg_vote_prop', 'Neu_vote_prop'])
+    df_stat_com['Year'] = years_
+    df_stat_com['Com_nbr'] = com
+    df_stat_com['Pos_vote_prop'] = pos_vote_prop
+    df_stat_com['Neg_vote_prop'] = neg_vote_prop
+    df_stat_com['Neu_vote_prop'] = neu_vote_prop
+    
+    return df_stat_com
+
+def plot_dist_vote_per_com(df, years):
+    """ Plot vote type proportion for each community and for specific years
+    Args:
+        df (pd.DataFrame): Dataframe containing the values to plot
+        year (list): Specific years on which we want our plot
+    """
+    # Transform the df in the adequate form
+    df_melt = pd.melt(df[df['Year'].isin(years)], id_vars=['Com_nbr', 'Year'], value_vars=['Pos_vote_prop', 'Neg_vote_prop', 'Neu_vote_prop'],
+                        var_name='Vote Type', value_name='Pourcentage')
+
+    # Create the plot
+    g = sns.catplot(x='Com_nbr', y='Pourcentage', hue='Vote Type', col='Year', data=df_melt, kind='bar', palette='colorblind')
+
+    # Add labels and title
+    g.set_axis_labels('Community', 'Vote percentage')
+    g.fig.suptitle('Vote percentage per community and per year', y=1.02)
+
+    # Move legend to below the graph
+    g.fig.subplots_adjust(bottom=0.2)
+    sns.move_legend(g, "upper center", bbox_to_anchor=(.5, 0.1), ncol=3, title=None, frameon=False)
+
+    # Show the plot
+    plt.show()
+
+def plot_vote_type_on_whole_year(df, type='Vote'):
+    """ Plot vote type proportion per year
+    Args:
+        df (pd.DataFrame): Dataframe containing the values to plot
+    """
+    #Transform the df in adequate form for the plot
+    melted_df = pd.melt(df, id_vars=['Year'], var_name='Statistic', value_name='Value')
+
+    # Create a bar plot 
+    plt.figure(figsize=(10, 6)) 
+    sns.barplot(x='Year', y='Value', hue='Statistic', data=melted_df, palette='muted')
+
+    # Add labels and title
+    plt.xlabel('Year')
+    if (type=='Results'): 
+        plt.ylabel('Results proportion')
+        plt.title('Results per year')
+        plt.legend(title='Results', loc='lower center', bbox_to_anchor=(0.5, -0.25), ncol=3)
+    else:
+        plt.ylabel('Vote Type proportion')
+        plt.title('Vote type per year')
+        plt.legend(title='Vote', loc='lower center', bbox_to_anchor=(0.5, -0.25), ncol=3)
+
+    # Show the plot
+    plt.show()
+
+def compute_vote_type_prop_on_whole_year(df_ref):
+    """ Compute the vote proportion for each vote type per year
+    Args:
+        df_ref (pd.DataFrame): Dataframe containing vote type per year
+    Returns:
+        df_prop_vote_per_year (pd.DataFrame): DataFrame containing the proportion per vote type per year
+    """
+    prop_vote_per_year = df_ref.groupby('Year')['Vote'].value_counts(normalize=True).unstack(fill_value=0)
+
+    # Extract proportions for each type of vote
+    prop_vote_pos = prop_vote_per_year[1]
+    prop_vote_neg = prop_vote_per_year[-1]
+    prop_vote_neu = prop_vote_per_year[0]
+
+    #create and fill in the df
+    df_prop_vote_per_year = pd.DataFrame(columns=['Year', 'Pos_vote_prop', 'Neg_vote_prop', 'Neu_vote_prop'])
+    df_prop_vote_per_year['Year'] = list(prop_vote_per_year.index)
+    df_prop_vote_per_year['Pos_vote_prop'] = prop_vote_pos.values
+    df_prop_vote_per_year['Neg_vote_prop'] = prop_vote_neg.values
+    df_prop_vote_per_year['Neu_vote_prop'] = prop_vote_neu.values
+
+    return df_prop_vote_per_year
+
+def compute_results_type_prop_on_whole_year(df_ref):
+    """ Compute the results proportion for each vote type per year
+    Args:
+        df_ref (pd.DataFrame): Dataframe containing vote type per year
+    Returns:
+        df_prop_results_per_year (pd.DataFrame): DataFrame containing the proportion per vote type per year
+    """
+    prop_results_per_year = df_ref.groupby('Year')['Results'].value_counts(normalize=True).unstack(fill_value=0)
+
+    # Extract proportions for each type of vote
+    prop_results_pos = prop_results_per_year[1]
+    prop_results_neg = prop_results_per_year[-1]
+
+    #create and fill in the df
+    df_prop_results_per_year = pd.DataFrame(columns=['Year', 'Pos_results_prop', 'Neg_results_prop'])
+    df_prop_results_per_year['Year'] = list(prop_results_per_year.index)
+    df_prop_results_per_year['Pos_results_prop'] = prop_results_pos.values
+    df_prop_results_per_year['Neg_results_prop'] = prop_results_neg.values
+
+    return df_prop_results_per_year
+
+def com_voting_time(df_ref, df_com_year_, year):
+    """ Compute the voting time mean and median per year
+    Args:
+        df_ref (pd.DataFrame): Dataframe containing voting time per year
+        df_com_year_ (DataFrame): Dataframe containing source and their matching community for a specific year
+        year (float): specific year matching df_com_year_
+    Returns:
+        df_prop_vote_per_year (pd.DataFrame): DataFrame containing the proportion per vote type per year
+    """
+    #filter the ref df
+    df_ref_year = df_ref[df_ref['Year']==int(year)]
+    #extract the source for the community df for 1 year
+    source_per_com = df_com_year_.groupby('Community').apply(lambda x : x['Source'])
+    
+    mean_voting_time = []
+    median_voting_time = []
+    #loop over all communities of this year
+    for n in range (df_com_year_['Community'].max()+1):
+        com = list(source_per_com[n].values)
+        #extract rows of the ref df based on the source which are in the community n
+        df_com = df_ref_year[df_ref_year['Source'].isin(com)].reset_index(drop=True)
+        
+        #extract proportion for theses sources
+        mean_ = df_com['Voting_time'].mean()
+        mean_voting_time.append(mean_)
+
+        median_ = df_com['Voting_time'].median()
+        median_voting_time.append(median_)
+    
+    #create the df
+    years_ = [int(year)]*(df_com_year_['Community'].max()+1)
+    com = list(range(df_com_year_['Community'].max()+1))
+    df_stat_com = pd.DataFrame(columns=['Year', 'Com_nbr', 'Mean_voting_time', 'Median_voting_time'])
+    df_stat_com['Year'] = years_
+    df_stat_com['Com_nbr'] = com
+    df_stat_com['Mean_voting_time'] = mean_voting_time
+    df_stat_com['Median_voting_time'] = median_voting_time
+    
+    return df_stat_com
+
+def plot_voting_time_per_com(df, years):
+    """ Plot mean and median voting time for each community and for specific years
+    Args:
+        df (pd.DataFrame): Dataframe containing the values to plot
+        year (list): Specific years on which we want our plot
+    """
+    # Tranform the df in an adequate form
+    df_melt = pd.melt(df[df['Year'].isin(years)], id_vars=['Com_nbr', 'Year'], value_vars=['Mean_voting_time', 'Median_voting_time'],
+                        var_name='Vote Type', value_name='Pourcentage')
+
+    # Create the plot
+    g = sns.catplot(x='Com_nbr', y='Pourcentage', hue='Vote Type', col='Year', data=df_melt, kind='bar', palette='colorblind')
+
+    # Add labels and title
+    g.set_axis_labels('Community', 'Voting Time')
+    g.fig.suptitle('Voting time per community and per year', y=1.02)
+
+    # Move legend to below the graph
+    g.fig.subplots_adjust(bottom=0.2)
+    sns.move_legend(g, "upper center", bbox_to_anchor=(.5, 0.1), ncol=3, title=None, frameon=False)
+
+    # Show the plot
+    plt.show()
+
+def plot_voting_time_on_whole_year(df):
+    """ Plot voting mean and median per year
+    Args:
+        df (pd.DataFrame): Dataframe containing the values to plot
+    """
+    # Transform the df in an adequate form
+    melted_df = pd.melt(df, id_vars=['Year'], var_name='Statistic', value_name='Value')
+
+    # Create a bar plot 
+    plt.figure(figsize=(10, 6)) 
+    sns.barplot(x='Year', y='Value', hue='Statistic', data=melted_df, palette='muted')
+
+    # Add labels and title
+    plt.xlabel('Year')
+    plt.ylabel('Voting Time (hours)')
+    plt.title('Mean and Median Voting Time per Year')
+
+    # Add legend
+    plt.legend(title='Statistic')
+
+    # Show the plot
+    plt.show()
+
+def compute_df_recall_accuracy_precision(df_ref, df_com_year_, year):
+    """ Compute the recall, accuracy and precision per year and per community
+    Args:
+        df_ref (pd.DataFrame): Dataframe containing voting time per year
+        df_com_year_ (DataFrame): Dataframe containing source and their matching community for a specific year
+        year (float): specific year matching df_com_year_
+    Returns:
+        df_stat_com (pd.DataFrame): DataFrame containing the recall, precision and accuracy
+    """
+    #filter the ref df
+    df_ref_year = df_ref[df_ref['Year']==int(year)]
+    #extract the source for the community df for 1 year
+    source_per_com = df_com_year_.groupby('Community').apply(lambda x : x['Source'])
+
+    accuracy = []
+    recall = []
+    precision = []
+    #loop over all communities of this year
+    for n in range (df_com_year_['Community'].max()+1):
+        com = list(source_per_com[n].values)
+        #extract rows of the ref df based on the source which are in the community n
+        df_com = df_ref_year[df_ref_year['Source'].isin(com)].reset_index(drop=True)
+
+        TP = np.sum((df_com['Vote']== df_com['Results']) & (df_com['Vote']==1))
+        TN = np.sum((df_com['Vote']== df_com['Results']) & (df_com['Vote']==-1))
+        FN = np.sum((df_com['Vote']!= df_com['Results']) & (df_com['Vote']==-1))
+        FP = np.sum((df_com['Vote']!= df_com['Results']) & (df_com['Vote']==1))
+        N = len(df_com['Vote'])
+        accuracy_ = (TP + TN)/N
+        if (TP == 0 & FN == 0) : recall_ = 0
+        else: recall_ = TP / (TP + FN)
+        precision_ = TP / (TP + FP)
+        accuracy.append(accuracy_)
+        recall.append(recall_)
+        precision.append(precision_)
+    
+    #create the df
+    years_ = [int(year)]*(df_com_year_['Community'].max()+1)
+    com = list(range(df_com_year_['Community'].max()+1))
+    df_stat_com = pd.DataFrame(columns=['Year', 'Com_nbr', 'Accuracy', 'Precision', 'Recall'])
+    df_stat_com['Year'] = years_
+    df_stat_com['Com_nbr'] = com
+    df_stat_com['Accuracy'] = accuracy
+    df_stat_com['Precision'] = precision
+    df_stat_com['Recall'] = recall
+   
+    return df_stat_com
+
+def plot_recall_accuracy_precision_per_com(df, years):
+    """ Plot the recall, accuracy and precision for each community and for specific years
+    Args:
+        df (pd.DataFrame): Dataframe containing the values to plot
+        year (list): Specific years on which we want our plot
+    """
+    # Transform the df in an appropriate form
+    df_melt = pd.melt(df[df['Year'].isin(years)], id_vars=['Com_nbr', 'Year'], value_vars=['Accuracy', 'Precision', 'Recall'],
+                        var_name='Stat', value_name='Pourcentage')
+
+    # Create the plot
+    g = sns.catplot(x='Com_nbr', y='Pourcentage', hue='Stat', col='Year', data=df_melt, kind='bar', palette='colorblind')
+
+    # Add labels and title
+    g.set_axis_labels('Community', 'Proportion')
+    g.fig.suptitle('Accuracy, Recall and Precision per community and per year', y=1.02)
+
+    # Move legend to below the graph
+    g.fig.subplots_adjust(bottom=0.2)
+    sns.move_legend(g, "upper center", bbox_to_anchor=(.5, 0.1), ncol=3, title=None, frameon=False)
+
+    # Show the plot
+    plt.show()
+
+def calculate_accuracy_recall_precision_on_whole_years(group):
+    """ Plot the recall, accuracy and precision for a specific year
+    Args:
+        group (pd.DataFrame): Dataframe containing the vote and the results for one year
+    """
+    TP = np.sum((group['Vote'] == group['Results']) & (group['Vote'] == 1))
+    TN = np.sum((group['Vote'] == group['Results']) & (group['Vote'] == -1))
+    FN = np.sum((group['Vote'] != group['Results']) & (group['Vote'] == -1))
+    FP = np.sum((group['Vote'] != group['Results']) & (group['Vote'] == 1))
+    N = len(group['Vote'])
+    
+    accuracy = (TP + TN) / N if N != 0 else np.nan
+    recall = TP / (TP + FN) if (TP + FN) != 0 else np.nan
+    precision = TP / (TP + FP) if (TP + FP) != 0 else np.nan
+    
+    return pd.Series({
+        'Accuracy': np.round(accuracy,3),
+        'Precision': np.round(precision,3),
+        'Recall': np.round(recall,3)
+    })
+
+def plot_accuracy_recall_precision_on_whole_years(df):
+    """ Plot the recall, accuracy and precision per years
+    Args:
+        df (pd.DataFrame): Dataframe containing the values to plot
+    """
+    # Transform the df in an appropriate form
+    melted_df = pd.melt(df[['Year', 'Accuracy',  'Precision', 'Recall']], id_vars=['Year'], var_name='Statistic', value_name='Value')
+    # Create a bar plot using Seaborn
+    plt.figure(figsize=(10, 6))  
+    sns.barplot(x='Year', y='Value', hue='Statistic', data=melted_df, palette='muted')
+
+    # Add labels and title
+    plt.xlabel('Year')
+    plt.ylabel('Voting Time (hours)')
+    plt.title('Mean and Median Voting Time per Year')
+
+    # Add legend
+    plt.legend(title='Vote', loc='lower center', bbox_to_anchor=(0.5, -0.25), ncol=3)
+
+    # Show the plot
+    plt.show()
+################### End #####################
