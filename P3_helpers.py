@@ -1211,6 +1211,7 @@ def compute_df_recall_accuracy_precision(df_ref, df_com_year_, year):
     recall = []
     precision = []
     specificity = []
+    neutral_vote_prop = []
     #loop over all communities of this year
     for n in range (df_com_year_['Community'].max()+1):
         com = list(source_per_com[n].values)
@@ -1221,27 +1222,31 @@ def compute_df_recall_accuracy_precision(df_ref, df_com_year_, year):
         TN = np.sum((df_com['Vote']== df_com['Results']) & (df_com['Vote']==-1))
         FN = np.sum((df_com['Vote']!= df_com['Results']) & (df_com['Vote']==-1))
         FP = np.sum((df_com['Vote']!= df_com['Results']) & (df_com['Vote']==1))
+        neutral = np.sum(df_com['Vote']==0)
         N = len(df_com['Vote'])
         accuracy_ = (TP + TN)/N
         if (TP == 0 & FN == 0) : recall_ = 0
         else: recall_ = TP / (TP + FN)
         precision_ = TP / (TP + FP)
         specificity_ = TN/(TN+FN)
+        neutral_vote_prop_ = neutral/N
         accuracy.append(accuracy_)
         recall.append(recall_)
         precision.append(precision_)
         specificity.append(specificity_)
+        neutral_vote_prop.append(neutral_vote_prop_)
     
     #create the df
     years_ = [int(year)]*(df_com_year_['Community'].max()+1)
     com = list(range(df_com_year_['Community'].max()+1))
-    df_stat_com = pd.DataFrame(columns=['Year', 'Com_nbr', 'Accuracy', 'Precision', 'Recall', 'Specificity'])
+    df_stat_com = pd.DataFrame(columns=['Year', 'Com_nbr', 'Accuracy', 'Precision', 'Recall', 'Specificity', 'Neutral_vote_prop'])
     df_stat_com['Year'] = years_
     df_stat_com['Com_nbr'] = com
     df_stat_com['Accuracy'] = accuracy
     df_stat_com['Precision'] = precision
     df_stat_com['Recall'] = recall
     df_stat_com['Specificity'] = specificity
+    df_stat_com['Neutral_vote_prop'] = neutral_vote_prop
    
     return df_stat_com
 
@@ -1252,7 +1257,7 @@ def plot_recall_accuracy_precision_per_com(df, years):
         year (list): Specific years on which we want our plot
     """
     # Transform the df in an appropriate form
-    df_melt = pd.melt(df[df['Year'].isin(years)], id_vars=['Com_nbr', 'Year'], value_vars=['Accuracy', 'Precision', 'Recall', 'Specificity'],
+    df_melt = pd.melt(df[df['Year'].isin(years)], id_vars=['Com_nbr', 'Year'], value_vars=['Accuracy', 'Precision', 'Recall', 'Specificity', 'Neutral_vote_prop'],
                         var_name='Stat', value_name='Pourcentage')
 
     # Create the plot
@@ -1260,11 +1265,11 @@ def plot_recall_accuracy_precision_per_com(df, years):
 
     # Add labels and title
     g.set_axis_labels('Community', 'Proportion')
-    g.fig.suptitle('Accuracy, Recall, Precision and Specificity per community and per year', y=1.02)
+    g.fig.suptitle('Accuracy, Recall, Precision, Specificity and proportion of neutral vote per community and per year', y=1.02)
 
     # Move legend to below the graph
     g.fig.subplots_adjust(bottom=0.2)
-    sns.move_legend(g, "upper center", bbox_to_anchor=(.5, 0.1), ncol=4, title=None, frameon=False)
+    sns.move_legend(g, "upper center", bbox_to_anchor=(.5, 0.1), ncol=5, title=None, frameon=False)
 
     # Show the plot
     plt.show()
@@ -1278,16 +1283,21 @@ def calculate_accuracy_recall_precision_on_whole_years(group):
     TN = np.sum((group['Vote'] == group['Results']) & (group['Vote'] == -1))
     FN = np.sum((group['Vote'] != group['Results']) & (group['Vote'] == -1))
     FP = np.sum((group['Vote'] != group['Results']) & (group['Vote'] == 1))
+    neutral = np.sum(group['Vote']==0)
     N = len(group['Vote'])
     
     accuracy = (TP + TN) / N if N != 0 else np.nan
     recall = TP / (TP + FN) if (TP + FN) != 0 else np.nan
     precision = TP / (TP + FP) if (TP + FP) != 0 else np.nan
-    
+    specificity = TN/(TN+FN) if (TN+FN) != 0 else np.nan
+    neutral_vote_prop = neutral/N if N != 0 else np.nan
+
     return pd.Series({
         'Accuracy': np.round(accuracy,3),
         'Precision': np.round(precision,3),
-        'Recall': np.round(recall,3)
+        'Recall': np.round(recall,3),
+        'Specificity' : np.round(specificity,3),
+        'Neutral_vote_prop' : np.round(neutral_vote_prop, 3)
     })
 
 def plot_accuracy_recall_precision_on_whole_years(df):
@@ -1296,18 +1306,18 @@ def plot_accuracy_recall_precision_on_whole_years(df):
         df (pd.DataFrame): Dataframe containing the values to plot
     """
     # Transform the df in an appropriate form
-    melted_df = pd.melt(df[['Year', 'Accuracy',  'Precision', 'Recall']], id_vars=['Year'], var_name='Statistic', value_name='Value')
+    melted_df = pd.melt(df[['Year', 'Accuracy',  'Precision', 'Recall', 'Specificity', 'Neutral_vote_prop']], id_vars=['Year'], var_name='Statistic', value_name='Value')
     # Create a bar plot using Seaborn
     plt.figure(figsize=(10, 6))  
     sns.barplot(x='Year', y='Value', hue='Statistic', data=melted_df, palette='muted')
 
     # Add labels and title
     plt.xlabel('Year')
-    plt.ylabel('Voting Time (hours)')
-    plt.title('Mean and Median Voting Time per Year')
+    plt.ylabel('Proportion')
+    plt.title('Accuracy, Recall, Precision, Specificity and proportion of negative vote per year')
 
     # Add legend
-    plt.legend(title='Vote', loc='lower center', bbox_to_anchor=(0.5, -0.25), ncol=3)
+    plt.legend(title='Vote', loc='lower center', bbox_to_anchor=(0.5, -0.25), ncol=5)
 
     # Show the plot
     plt.show()
