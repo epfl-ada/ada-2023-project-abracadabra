@@ -1,4 +1,4 @@
-# Exploring Influence in Wikipedia Requests for Adminship
+# TEST
 by Gaëlle Verdon, Jean-Daniel Rouveyrol, Emma Boehly, David Bekri and Alexandre Maillard
 
 
