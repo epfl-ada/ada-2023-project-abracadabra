@@ -1224,7 +1224,7 @@ def compute_df_recall_accuracy_precision(df_ref, df_com_year_, year):
         FP = np.sum((df_com['Vote']!= df_com['Results']) & (df_com['Vote']==1))
         neutral = np.sum(df_com['Vote']==0)
         N = len(df_com['Vote'])
-        N_accuracy = len(df_com['Vote'])/ - np.sum(df_com['Vote']==0)
+        N_accuracy = len(df_com['Vote']) - neutral
         accuracy_ = (TP + TN)/N_accuracy
         if (TP == 0 & FN == 0) : recall_ = 0
         else: recall_ = TP / (TP + FN)
@@ -1236,7 +1236,7 @@ def compute_df_recall_accuracy_precision(df_ref, df_com_year_, year):
         precision.append(precision_)
         specificity.append(specificity_)
         neutral_vote_prop.append(neutral_vote_prop_)
-    
+
     #create the df
     years_ = [int(year)]*(df_com_year_['Community'].max()+1)
     com = list(range(df_com_year_['Community'].max()+1))
@@ -1250,6 +1250,7 @@ def compute_df_recall_accuracy_precision(df_ref, df_com_year_, year):
     df_stat_com['Neutral_vote_prop'] = neutral_vote_prop
    
     return df_stat_com
+    
 
 def plot_recall_accuracy_precision_per_com(df, years):
     """ Plot the recall, accuracy and precision for each community and for specific years
