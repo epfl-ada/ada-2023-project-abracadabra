@@ -974,7 +974,7 @@ def plot_dist_vote_per_com(df, years):
     # Show the plot
     plt.show()
 
-def plot_vote_type_on_whole_year(df):
+def plot_vote_type_on_whole_year(df, type='Vote'):
     """ Plot vote type proportion per year
     Args:
         df (pd.DataFrame): Dataframe containing the values to plot
@@ -988,11 +988,14 @@ def plot_vote_type_on_whole_year(df):
 
     # Add labels and title
     plt.xlabel('Year')
-    plt.ylabel('Vote Type proportion')
-    plt.title('Vote type per year')
-
-    # Add legend
-    plt.legend(title='Vote', loc='lower center', bbox_to_anchor=(0.5, -0.25), ncol=3)
+    if (type=='Results'): 
+        plt.ylabel('Results proportion')
+        plt.title('Results per year')
+        plt.legend(title='Results', loc='lower center', bbox_to_anchor=(0.5, -0.25), ncol=3)
+    else:
+        plt.ylabel('Vote Type proportion')
+        plt.title('Vote type per year')
+        plt.legend(title='Vote', loc='lower center', bbox_to_anchor=(0.5, -0.25), ncol=3)
 
     # Show the plot
     plt.show()
@@ -1019,6 +1022,27 @@ def compute_vote_type_prop_on_whole_year(df_ref):
     df_prop_vote_per_year['Neu_vote_prop'] = prop_vote_neu.values
 
     return df_prop_vote_per_year
+
+def compute_results_type_prop_on_whole_year(df_ref):
+    """ Compute the results proportion for each vote type per year
+    Args:
+        df_ref (pd.DataFrame): Dataframe containing vote type per year
+    Returns:
+        df_prop_results_per_year (pd.DataFrame): DataFrame containing the proportion per vote type per year
+    """
+    prop_results_per_year = df_ref.groupby('Year')['Results'].value_counts(normalize=True).unstack(fill_value=0)
+
+    # Extract proportions for each type of vote
+    prop_results_pos = prop_results_per_year[1]
+    prop_results_neg = prop_results_per_year[-1]
+
+    #create and fill in the df
+    df_prop_results_per_year = pd.DataFrame(columns=['Year', 'Pos_results_prop', 'Neg_results_prop'])
+    df_prop_results_per_year['Year'] = list(prop_results_per_year.index)
+    df_prop_results_per_year['Pos_results_prop'] = prop_results_pos.values
+    df_prop_results_per_year['Neg_results_prop'] = prop_results_neg.values
+
+    return df_prop_results_per_year
 
 def com_voting_time(df_ref, df_com_year_, year):
     """ Compute the voting time mean and median per year
