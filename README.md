@@ -38,8 +38,8 @@ Not all of the following datasets have been found for the moment, but they remai
 - We performed topics detection to find the most frequently used topics and see if they have an order of appearance as the election progresses and any particular weight in the result. This analysis shows the positive or negative influence of a certain topic and its importance according to the order in which it appears. 
   
 ### Edits from users :
-- With the help of an additional dataset, we look into the evolution of edits of users over time
-
+- With the help of the supplementary dataset, we look into the evolution of users' edit over time to analyse the effect of the revisions made by a user in the decision making process of wikipedia-rfa.
+- We checked the impact of the revisison in the influence between community and within community. 
 
 ### Network Analysis : 
 - We build network graphs of the voters (Source) to have a visualization of how they are linked to each other and see if we can extract clusters from them. Ideally we would like to do this plot interactive to visualize the evolution over time and see if the clusters are stable/similar or not.
@@ -49,10 +49,6 @@ Not all of the following datasets have been found for the moment, but they remai
 - Studying the evolution of votes over time to see how the supporting or opposing side becomes dominant in the timeline of voting. In particular, we would like to see if there is some wave of support or opposition that may swing some elections. This may also enable us to discriminate between heated debate and more homogeneous decisions.
 
   
-
-
-
-
 ### Combination of both
 The final stage of this project will be to combine the two analyses (network and comment) to cross-check the clusters to see if the groups of people are the same and to see if the conclusions drawn from one method apply to the second. 
 
@@ -69,8 +65,8 @@ The primary objective of these various analyses is to examine whether distinct g
 ## Team Contribution : 
 - Network Analysis :
   - Visualisation and Studying the evolution of votes over time : Emma
-  - Extract voting time pattern and Modularity to evaluate community quality : Gaelle
-  - Cluster based on the vote : Alexandre
+  - First analysis of the community : Gaelle
 - Comment Analysis :
   - Topics modelling : Jean-Daniel
   - Sentiment Analysis : David
+- Edits from user : Alexandre
