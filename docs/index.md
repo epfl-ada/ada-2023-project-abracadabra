@@ -83,7 +83,7 @@ Extracting the distinctive features, we can see that communities 2 and 4 in 2004
 
 Now let's see if the communities mentioned are indeed small. 
 
-<iframe src="assets/img/Figures_Gaelle/community_size_proportion_2004_2009.png" width="1200px" height="530px" frameborder="0" position="relative">Size proportion of the communties in 2004 and 2009</iframe>
+<iframe src="assets/img/Figures_Gaelle/community_size_proportion_2004_2009.png" width="50%" height="30%" frameborder="0" position="relative">Size proportion of the communties in 2004 and 2009</iframe>
 
 We can see that all these communities are actually small, confirming the observation made earlier that more features can be extracted from small communities, as these features are smoother and therefore less visible in larger ones.
 
