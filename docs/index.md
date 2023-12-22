@@ -2,32 +2,42 @@
 
 <h1 style="text-align: center;"> The Power of Online Communities and the Art of Large Scale Decision Process </h1>
 
-How wonderful are the online communities! In the vast landscape of the digital era, the emergence of online communities stands as a demonstration of the transformative power of the internet. This virtual world offers a unique and powerful mean for people from every part of the globe to connect and exchange ideas, fostering the development of new tools and platforms from collaborative efforts, of which Wikipedia is a prime example. However, the growth of these communities brings along a new set of challenges related to the organization and management at such a large scale: How can thousands to millions of users make a decision together and agree on common rules and goals?
+How wonderful are the online communities! In the vast landscape of the digital era, the emergence of online communities stands as a demonstration of the transformative power of the internet. This virtual world offers a unique and powerful means for people from every part of the globe to connect and exchange ideas, fostering the development of new tools and platforms from collaborative efforts, of which Wikipedia is a prime example. However, the growth of these communities brings along a new set of challenges related to the organization and management at such a large scale: How can thousands to millions of users make a decision together and agree on common rules and goals?
 
 To address this question, we study the case of Wikipedia, the largest online encyclopedia, which has been built and maintained by millions of volunteers over the past two decades. In particular, we focus on the English Wikipedia, which is the largest Wikipedia edition with 7 million articles and 46 million registered users and for which we have access to a comprehensive dataset spanning from 2003 to 2013, focusing on Wikipedia elections, namely the : “Requests for Adminship” (RfA), as well as a dataset of the number of monthly edits per user over the same period.
 The relevance of choosing Wikipedia as a case study is twofold. First, Wikipedia is a unique example of a large-scale online community that has been able to sustain itself over the years and despite its impressive growth. Second, Wikipedia has a well-defined and transparent process for electing administrators with publicly available data, which makes it an ideal case study for understanding the dynamics of collective decision-making in online communities.
 
-## *Time Series analysis* 
+To introduce our analysis, let's start by presenting our main dataset: Wikipedia Requests for Adminship. This dataset contains the collection of votes cast for the users applying to become administrators of the platform. We therefore have for each of them (referred to as Target) the list of people who took part in the election (referred to as Source) and their respective votes, accompanied in most cases by a comment from the voter. We also have access to the date and time of each vote, as well as the final result of each election. Using all this information, our first approach was to look at the temporal aspect of the votes.
+
+## *Voting time and dynamics: How and when are the outcomes of elections settled?s* 
 
 One first step towards understanding the process of collective decision-making is to study the dynamics of voting behavior over time. In particular, we are interested in the temporal patterns of votes and how they relate to the final outcome of the election.
 To extract the timing of votes, we used the timestamps given in the raw data and defined the first vote casted for a target as the starting point of an election round. From there, we wondered if we could extract groups of voters that would vote earlier or later in the election which would be indicative of influential and influenced voters respectively.
 
-PLOT DISTRIB VOTING TIME WITH YEAR TO ADD
+<img src="assets/img/time_series/hist_voting_time.png" width="750px" height=auto frameborder="0" position="relative">
 
-By seeing the distribution of voting times, we were surprised to discover a bimodal distribution (when using a log scale) and in conjunction with our idea of splitting voters into two groups, we were tempted to explain this phenomenon as indicating the actual existence of two groups of voters separated by their voting time. However, after some investigation of the data and looking into the literature about the RfA rules, we quickly realized that this bimodal distribution can actually be easily explained by the fact that some targets that were not elected would be re-nominated and thus would have a second round of votes (or even more). And after delving deeper into the data and with the information we found on the RfA process, we were able to define properties of the voting time enabling us to distinguish multiple rounds of votes for a given target. We could also check that the resulting rounds were consistent with the data by extracting some comments coherent with our assumptions.
-EXAMPLE ROUND NUMBER 7
-
-ADD TABLEAU
+By seeing the distribution of voting times, we were surprised to discover a bimodal distribution (when using a log scale) and in conjunction with our idea of splitting voters into two groups, we were tempted to explain this phenomenon as indicating the actual existence of two groups of voters separated by their voting time. However, after some investigation of the data and looking into the literature about the RfA rules, we quickly realized that this bimodal distribution can actually be easily explained by the fact that some targets that were not elected would be re-nominated and thus would have a second round of votes (or even more). And after delving deeper into the data and with the information we found on the RfA process, we were able to define properties of the voting time enabling us to distinguish multiple rounds of votes for a given target. We could also check that the resulting rounds were consistent with the data by extracting some comments coherent with our assumptions, for example:
 
 <img src="assets/img/time_series/pdf_voting_time.png" width="750px" height=auto frameborder="0" position="relative">
 
 Once this processing step done, we ended up with a heavy tailed distribution of voting times with a median of 2 days, consistent over the years. 
+
+<img src="assets/img/time_series/table_emma.png" width="750px" height=auto frameborder="0" position="relative">
 
 Our attempt at extracting 2 voting groups therefore does not seem to correspond to the reality of votes, but instead of coming to a conclusion too quickly, we preferred to verify our hypothesis by directly examining the behavior of sources. We extracted the mean and standard deviation of each source votes and displayed their distribution.
 
 <img src="assets/img/time_series/mean_std_time.png" width="750px" height=auto frameborder="0" position="relative">
 
 Once again we get a normal unimodal distribution, such that we can not infer any voting group.
+However, despite the fact that we were unable to extract clearly separated groups of voters based solely on their voting time, we still wanted to take into account the fact that not all sources are equally active in elections:
+
+<img src="assets/img/time_series/hist_votes_per_source.png" width="750px" height=auto frameborder="0" position="relative">
+
+Indeed, we can see that the majority of sources only vote a small number of times, and that only a few of them vote a lot, as shown by the heavy tailed distribution. We therefore wanted to check whether by chance the most active sources voted earlier than the others, with the aim of having a greater impact. To do this, we plotted the distribution of voting times of the sources against the number of votes they cast.
+
+<img src="assets/img/time_series/mean_voting_time_nuage_points.png" width="750px" height=auto frameborder="0" position="relative">
+
+Once again, we observe no meaningful correlation between voting time and the number of votes cast by a source. We can therefore conclude that voting time does not play a decisive role in the process of electing Wikipedia administrators.
 
 To carry on in the present manner, we decided to focus on votes themselves, in particular on their evolution over time. More precisely, we wanted to know if supporting or opposing votes are homogeneous over time, or conversely if they diverge at a certain point to reinforce the final decision. We therefore computed the evolution of the mean of votes over time and for each election.
 
@@ -51,13 +61,12 @@ We see in fact that despite that the distributions are clearly different and tha
 
 Two considerations are relevant there :
 Firstly, we can successfully predict with such accuracy the result of an election from the first votes input. This makes us think that there is a possibility that the first negative votes influence the following votes, and therefore may determine the election outcome prematurely. It would therefore be interesting to verify if the correlation we observed between the first votes and the final outcome is causal and indicates an influence, or if other factors are implied that can explain both the initial negative trend and the final outcome of the election.
+Secondly, for cases in which the first votes are rather positive, it is more difficult to predict the final outcome of the election. This begs to consider the possibility that a vote or a group of votes input later in the election may influence the final outcome of the election.
 
-Secondly, for cases in which the first votes are rather positive, it is more difficult to predict a final outcome of the of the election. This begs to consider the possibility that a vote or a group of votes input later in the election may influence the final outcome of the election.
 
-In order to effectively answer both these questions, and thus have a more nuanced vision of votes that compose an election, we decided to use comments that are at our disposal. In fact, comments are a very rich source of information that the votes do not give by themselves, since votes are just binary values, and as such do not allow to figure out the intensity and the real intension of a voter. Using comments therefore allows us to have a better view of votes and that way maybe be more nuanced in our analysis.
+In order to effectively answer both these questions, and thus have a more nuanced vision of votes that compose an election, we decided to use comments that are at our disposal. In fact, comments are a very rich source of information that the votes do not give by themselves, since votes are just binary values, and as such do not allow to figure out the intensity and the real intention of a voter. Using comments therefore allows us to have a better view of votes and that way maybe be more nuanced in our analysis.
 
 Our first approach to use comments was to perform a sentiment analysis on the comments in order to extract the polarity of each comment so that we have an idea of the intensity of votes, since such an analysis generates a continuous value score between -1 and 1 for a given text, -1 meaning the text is totally negative, neutral if it is 0, and totally positive if it is 1.
-
 
 <img src="assets/img/sentiment_analysis/hist_sentiment.png" width="750px" height=auto frameborder="0" position="relative">
 
@@ -65,21 +74,18 @@ We can already see that the majority of comments are neutral and that positive c
 
 <img src="assets/img/sentiment_analysis/pie_sentiment_year.png" width="850px" height=auto frameborder="0" position="relative">
 
-On these graphs we see a quite surprising result. We were expecting that the proportions of positive and negative comments stay constant over years, but it seems that it is not the case. In fact, we observed over years a clear decrease of the number of neutral comment for the benefit of positive and negative comments. This leads us to believe that over years, voters are more and more prone to express their opinion more decisively in the comments, which is at our advantage since it enables to get more information on the reasons that motivate voters to vote for or against a certain request, and thus have a better view of which parameters are implied in the decision process.
-
-À partir de ces nouvelles données, nous avons donc décidé de reproduire les analyses précédentes en utilisant les scores de sentiment à la place des votes dans l'espoir d'avoir des résultats encore plus marqués que ceux que nous avons obtenus jusqu'à présent. Malheureusement, nous avons assez rapidement dû nous rendre à l'évidence que les scores de sentiment n'étaient au final pas suffisamment polarisés pour nous permettre d'avoir des résultats plus distincts que ceux que nous avons déjà obtenus.
+On these graphs we see a quite surprising result. We were expecting that the proportions of positive and negative comments stay constant over years, but it seems that it is not the case. In fact, we observed over years a clear decrease of the number of neutral comments for the benefit of positive and negative comments. This leads us to believe that over years, voters are more and more prone to express their opinion more decisively in the comments, which is at our advantage since it enables to get more information on the reasons that motivate voters to vote for or against a certain request, and thus have a better view of which parameters are implied in the decision process.
 
 From this new data, we decided to reproduce previous analyses by using sentiment analysis scores instead of votes, while hoping to get more pronounced results that what we got so far. Unfortunately, we quickly realized that sentiment scores were not polarized enough to give us more distinct results than what we already had.
-
 
 <img src="assets/img/time_series/median_quartiles_over_time_sentiment.png" width="750px" height=auto frameborder="0" position="relative">
 
 In fact, as suggests the above figure, we can see that the trend curves are way too close to get any relevant conclusion, despite that the accepted requests are effectively slightly less positive than rejected requests. We can still note that the values dispersion is bigger with sentiment scores than votes despite that, with most comments being neutral, we were expecting to have closer values instead.
 In the end, we had to accept that the distribution of sentiment scores over time was mostly the consequence of the score distribution, and not a consequence of the success or failure of a request.
 
-This failed tentative did not stop us, and we still wanted to investigate comments in other ways. In fact, we realized that the positive or negativity of comments is not a relevant factor to take into account, and that the reasoning behind votes is more complex. We then decided to look at the semantics of the comments. In particular, we decided to use topic modelling in order to extract the main topics of the comments and have an idea of what is discussed in the comments.
+This failed tentative did not stop us, and we still wanted to investigate comments in other ways. In fact, we realized that the positive or negativity of comments is not a relevant factor to take into account, and that the reasoning behind votes is more complex. We then decided to look at the semantics of the comments. In particular, we used topic modeling in order to extract the main topics of the comments and have an idea of what is discussed in the comments.
 
-## *Topic analysis* 
+## *Topic analysis: What are the decisive aspects of the decision-making process?* 
 
 In this part of the analysis we want to focus on understanding what matters the most in influencing the result of an election, by using the comments that voters may write while casting their votes. 
 
@@ -175,9 +181,12 @@ In the following, we will analyze some of the larger communities and focus on sm
 
 
 ## *Community analysis*
+In order to have a reference point when studying the communities, and also to be able to check that there is no variation within the years themselves, which could induce a bias in our analyses, we began by extracting the proportions of positive, neutral and negative votes for each year.
 
-On the one hand, let's take relatively large communities, such as those in 2006. It includes 3 communities representing respectively 37%, 37% and 24% of the number of sources having voted that year.  
-On the other hand, let's take smaller communities, for example, those of 2005, which includes 6 communities, 3 of which represent less than 5% of the total number of sources who voted that year (respectively 0.9%, 3.3% and 2.8% for communities 3, 4 and 5 of this year).
+<img src="assets/img/Figures_Gaelle/vote_prop_all_years.png" width="750px" height=auto frameborder="0" position="relative">
+
+We see here that the voting proportions are indeed relatively constant over the years, and that there is no evidence of any significant change in voting behavior over the years. We can therefore use these proportions as a reference point for our future analyses.
+Let's now focus on the behavior of communities: Note that we have larger ones, such as those in 2006. It includes 3 communities representing respectively 37%, 37% and 24% of the number of sources having voted that year. And we also have smaller ones, for example, those of 2005, which includes 6 communities, 3 of which represent less than 5% of the total number of sources who voted that year (respectively 0.9%, 3.3% and 2.8% for communities 3, 4 and 5 of this year).
 
 If we look at the percentage of vote by type of vote (positive, negative or neutral) for these communities, we observe a very large majority of positive votes, approaching 80%, a smaller proportion of negative votes, close to 15-20%, and a smaller proportion of neutral votes, close to 5% for the year 2006 and generally for the year 2005, in line with the general voting behavior observed previously. However, a closer look at community 3 in 2005 reveals a different pattern. This small community has a percentage of negative votes approaching 80%, while positive votes are close to 15%, suggesting a different voting dynamic.
 
@@ -194,7 +203,7 @@ On the other hand, for the smallest communities in 2005, the values are more dis
 <img src="assets/img/Figures_Gaelle/prediction_vote_2005_2006.png" width="750px" height=auto frameborder="0" position="relative">
 
 So far, we've only highlighted remarkable features of one small community, so we might ask whether the highlighting of these remarkable features is unique to that community. Let's see, for example, whether the prediction of election results stands out for certain communities, and whether these communities are small in size. 
-Extracting the distinctive features, we can see that communities 2 and 4 in 2004 have a specificity equal to 1 (as does community 3 in 2005), meaning that when these sources vote against, the election result is also negative - these communities can be described as "negative but fair". Community 0 in 2009 has a precision of 1, meaning that as soon as it votes positively, the election result is also positive, so it could be described as "nice but fair". Finally, community 4 from 2004 has a low precision value, even though it has a high recall. This means that this community mostly votes positively, but too often for this to be done accurately. We could call it TROUVER UN NOM !!!!
+Extracting the distinctive features, we can see that communities 2 and 4 in 2004 have a specificity equal to 1 (as does community 3 in 2005), meaning that when these sources vote against, the election result is also negative - these communities can be described as "negative but fair". By checking if those results are accurate based on the revisions’ number of the user, we have seen that, in most of the cases, users have no activity prior to their request, justifying a negative result. But for Community 2 in 2004, the rejected user had a large enough number of revisions to justify validation rather than rejection, while others were validated by this same community with no revisions. This raises a pertinent question: why was this user rejected when others with no revisions were accepted? The answer may come from revisions not mentioned in our dataset, or from other more subtle reasons such as the topics covered by these users.  Community 0 in 2009 has a precision of 1, meaning that as soon as it votes positively, the election result is also positive, so it could be described as "nice but fair". Finally, community 4 from 2004 has a low precision value, even though it has a high recall. This means that this community mostly votes positively, but too often for this to be done accurately.
 
 <img src="assets/img/Figures_Gaelle/prediction_vote_2004_2009.png" width="750px" height=auto frameborder="0" position="relative">
 
@@ -204,24 +213,45 @@ Now let's see if the communities mentioned are indeed small.
 
 We can see that all these communities are actually small, confirming the observation made earlier that more features can be extracted from small communities, as these features are smoother and therefore less visible in larger ones.
 
+Continuing our exploration of communities, we investigated whether specific communities (large and small) exhibited higher activity in making revisions. Our initial analysis revealed minimal variations among communities, with the exception of 2004's community 4. Generally, communities demonstrated equal engagement, averaging between 3000 and 5000 revisions per user per year.
+
+To gain deeper insights, we shifted our focus to individual users within communities and their potential influence based on voting behaviors. Examining graphs for the top 10 users in terms of revisions within communities, we uncovered significant disparities. Some users made well over 150,000 page revisions, while others contributed only a few thousand.
+
+However, when we factored in their voting time, a key element in understanding potential influence in future vote, we found no substantial differences compared to other users. Once again, our analysis suggests that when assessing a user's influence on others, clear patterns are elusive.
+
 However, despite the distinctive features observed within these small communities, it is legitimate to question their representativity as voting sources. It could be that our community extraction algorithm has grouped together only the most extreme individuals within a given community in a given year, and with source votes spanning several years, it is pertinent to ask whether these communities are not in fact small entities independent of the voting process aimed at electing administrators for Wikipedia.
 
 ## *What are the links between communities* 
 
-We then wanted to analyze the similarity of the different communities. We chose to do it through the Jaccard similarity, which allows us to measure the similarity between two sets by computing the size of their intersection, and dividing it by the size of their union.
+We then wanted to analyze the evolution of the different communities year by year. We chose to do it through the Jaccard similarity, which allows us to measure the similarity between two community source sets.
 
-Since our communities consist in the name of the sources, which is a set of unique terms, we can simply compute the Jaccard similarity between two communities based on the source present in them.
-
-The way we display the similarities between the communities is through a graph in which the similarity is symbolized by a link, which is thicker for similar communities, and thinner for distant ones.
+In the following graph nodes are communities arranged by year, their size represents the number of sources in them. Edges represent the similarities with their width and transparency. Thick and opaque mean big similarity. 
 
 <img src="assets/img/community_evolutions/com_evo.png" width="750px" height=auto frameborder="0" position="relative">
 
-We then wanted to analyze the similarity of the different communities in terms of topics.
+The first particular thing we can observe in the above graph is that the sizes and number of communities greatly varies between years, most of the time communities do not last through years - there does not appear to be sources that consistently constitute a community together through several years. 
 
-Since the topics of our communities also consist in a set of unique terms, we can compute the Jaccard similarity between two communities similarly to what was done previously.
+Communities seem to be more "stable" from 2004 to 2007, there are really thick links between some communities in this period of time. On the other hand, on the opposite side of the graph, links are of the same thickness, for example the community 2 of year 2012 is connected the same way to the communities of 2013 - in comparison with the community 0 from year 2005 with the ones from 2006.
 
+This “stable” state from early years that faded out in such ways that communities are more “fluid” in their evolution can be explained by one of our previous observations: sources vote, in proportion more in early years of our dataset than in the last years. Since our communities are based on similarity of voting choices, if they do not vote for the same target (because they do not vote for a majority of the election) they cannot be part of the same community.
 
+These observations seem to underline the fact that there would not be stable groups of voters that vote the same way, at least in the latest years. 
 
-?? —--------- figure “Jaccard similarity graph between topics in communities” —-- ??
+Now let’s have a closer look at the topics’ evolution. It is poor for the model with 3-Topics (see above) as only the same dominant, overall sources, topic is dominant for all communities. For the model with 5-Topics we have : 
+
+<img src="assets/img/community_evolutions/5_topic_com_evo.png" width="750px" height=auto frameborder="0" position="relative">
+
+Here we can see that even if we have a prevalent topic (3rd one) overall sources, the second most dominant one appears to be the first for some communities and even an overall topic with few share of matching comments is the most dominant one in 2004 and 2013. What is interesting is that they both have many communities. 
+
+So we may think that having many communities is linked with having many topics and different central criteria to vote. 
+
+First let see if this observation is not directly correlated to the number of topics of the model with plotting the same graphs as above for the 7-topics and 9-topics models
+
+<img src="assets/img/community_evolutions/7_topic_com_evo.png" width="750px" height=auto frameborder="0" position="relative">
+
+<img src="assets/img/community_evolutions/9_topic_com_evo.png" width="750px" height=auto frameborder="0" position="relative">
+
+We see that the same patterns arise for the model with nine topics but not with the 7-topics models. But the 9-topics model does not seem to amplify the number of different topics dominant inside communities. 
+
 
 ## *Conclusion* 
