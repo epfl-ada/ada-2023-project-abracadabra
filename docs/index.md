@@ -10,7 +10,18 @@ The relevance of choosing Wikipedia as a case study is twofold. First, Wikipedia
 
 --------------------------
 
-## *PART 1* 
+## *Time Series and source EMMA* 
+
+One first step towards understanding the process of collective decision-making is to study the dynamics of voting behavior over time. In particular, we are interested in the temporal patterns of votes and how they relate to the final outcome of the election.
+To extract the timing of votes, we used the timestamps given in the raw data and defined the first vote casted for a target as the starting point of an election round. From there, we wondered if we could extract groups of voters that would vote earlier or later in the election which would be indicative of influential and influenced voters respectively.
+
+PLOT DISTRIB VOTING TIME WITH YEAR TO ADD
+
+By seeing the distribution of voting times, we were surprised to discover a bimodal distribution (when using a log scale) and in conjunction with our idea of splitting voters into two groups, we were tempted to explain this phenomenon as indicating the actual existence of two groups of voters separated by their voting time. However, after some investigation of the data and looking into the literature about the RfA rules, we quickly realized that this bimodal distribution can actually be easily explained by the fact that some targets that were not elected would be re-nominated and thus would have a second round of votes (or even more). And after delving deeper into the data and with the information we found on the RfA process, we were able to define properties of the voting time enabling us to distinguish multiple rounds of votes for a given target. We could also check that the resulting rounds were consistent with the data by extracting some comments coherent with our assumptions.
+EXAMPLE ROUND NUMBER 7
+
+
+
 
 ### *Exemple how to add img* 
 <iframe src="assets/img/crepe.jpg width="750px" height="530px" frameborder="0" position="relative">Title</iframe>
