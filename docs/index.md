@@ -227,7 +227,7 @@ We then wanted to analyze the evolution of the different communities year by yea
 
 In the following graph nodes are communities arranged by year, their size represents the number of sources in them. Edges represent the similarities with their width and transparency. Thick and opaque mean big similarity. 
 
-<img src="assets/img/community_evolutions/com_evo.png" width="750px" height=auto frameborder="0" position="relative">
+<img src="assets/img/community_evolutions/com_evo.jpg" width="750px" height=auto frameborder="0" position="relative">
 
 The first particular thing we can observe in the above graph is that the sizes and number of communities greatly varies between years, most of the time communities do not last through years - there does not appear to be sources that consistently constitute a community together through several years. 
 
@@ -239,7 +239,7 @@ These observations seem to underline the fact that there would not be stable gro
 
 Now let’s have a closer look at the topics’ evolution. It is poor for the model with 3-Topics (see above) as only the same dominant, overall sources, topic is dominant for all communities. For the model with 5-Topics we have : 
 
-<img src="assets/img/community_evolutions/5_topic_com_evo.png" width="750px" height=auto frameborder="0" position="relative">
+<img src="assets/img/community_evolutions/5_topic_com_evo.jpg" width="750px" height=auto frameborder="0" position="relative">
 
 Here we can see that even if we have a prevalent topic (3rd one) overall sources, the second most dominant one appears to be the first for some communities and even an overall topic with few share of matching comments is the most dominant one in 2004 and 2013. What is interesting is that they both have many communities. 
 
@@ -247,9 +247,9 @@ So we may think that having many communities is linked with having many topics a
 
 First let see if this observation is not directly correlated to the number of topics of the model with plotting the same graphs as above for the 7-topics and 9-topics models
 
-<img src="assets/img/community_evolutions/7_topic_com_evo.png" width="750px" height=auto frameborder="0" position="relative">
+<img src="assets/img/community_evolutions/7_topic_com_evo.jpg" width="750px" height=auto frameborder="0" position="relative">
 
-<img src="assets/img/community_evolutions/9_topic_com_evo.png" width="750px" height=auto frameborder="0" position="relative">
+<img src="assets/img/community_evolutions/9_topic_com_evo.jpg" width="750px" height=auto frameborder="0" position="relative">
 
 We see that the same patterns arise for the model with nine topics but not with the 7-topics models. But the 9-topics model does not seem to amplify the number of different topics dominant inside communities. 
 
