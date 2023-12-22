@@ -62,4 +62,3 @@ The primary objective of these various analyses is to examine whether distinct g
   - Topics modelling : Jean-Daniel
   - Sentiment Analysis : David
   
-![image](https://github.com/epfl-ada/ada-2023-project-abracadabra/assets/93824789/118b116e-9b0c-49b8-a74c-86e282dca238)
