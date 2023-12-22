@@ -28,7 +28,7 @@ Once this processing step done, we ended up with a heavy tailed distribution of 
 
 Our attempt at extracting 2 voting groups therefore does not seem to correspond to the reality of votes, but instead of coming to a conclusion too quickly, we preferred to verify our hypothesis by directly examining the behavior of sources. We extracted the mean and standard deviation of each source votes and displayed their distribution.
 
-<iframe src="assets/img/time_series/mean_std_time.png" width="1200px" height="530px" frameborder="0" position="relative">Distribution of the mean and std deviation of voting time per source</iframe>
+<iframe src="assets/img/time_series/mean_std_time.png" width="1200px" frameborder="0" position="relative">Distribution of the mean and std deviation of voting time per source</iframe>
 
 Once again we get a normal unimodal distribution, such that we can not infer any voting group.
 
