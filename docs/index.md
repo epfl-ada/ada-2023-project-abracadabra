@@ -219,7 +219,7 @@ Generally speaking, it seems that the most prevalent topics among the models all
 
 ## *Users activity: a concret factor shaping the election outcomes* 
 <div align="justify">
-Let’s see if the number of edits is really an important feature for a target to be elected. Looking at the average number of edits made by targets in a 1-year period before and after the result of their last election, we observe the same inverted V shape, with the point indicating the election results, for people who were elected and rejected. Nevertheless we observe a significant difference between the two groups in terms of average number of edits, confirming what we had observed to be an important theme in comments across all years.
+Let’s see if the number of edits is really an important feature for a target to be elected. To carry out this study, we found a dataset listing the number of edits made by users in each month spanning the same period as our original dataset. Looking at the average number of edits made by targets in a 1-year period before and after the result of their last election, we observe the same inverted V shape, with the point indicating the election results, for people who were elected and rejected. Nevertheless we observe a significant difference between the two groups in terms of average number of edits, confirming what we had observed to be an important theme in comments across all years.
 </div>
 
 <img src="assets/img/edit/avg_edit_last_election.png" width="750px" height=auto frameborder="0" position="relative">
