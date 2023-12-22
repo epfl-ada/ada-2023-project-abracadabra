@@ -1285,17 +1285,12 @@ def com_voting_time(df_ref, df_com_year_, year):
     #extract the source for the community df for 1 year
     source_per_com = df_com_year_.groupby('Community').apply(lambda x : x['Source'])
     
-    mean_voting_time = []
     median_voting_time = []
     #loop over all communities of this year
     for n in range (df_com_year_['Community'].max()+1):
         com = list(source_per_com[n].values)
         #extract rows of the ref df based on the source which are in the community n
         df_com = df_ref_year[df_ref_year['Source'].isin(com)].reset_index(drop=True)
-        
-        #extract proportion for theses sources
-        mean_ = df_com['Voting_time'].mean()
-        mean_voting_time.append(mean_)
 
         median_ = df_com['Voting_time'].median()
         median_voting_time.append(median_)
@@ -1303,10 +1298,9 @@ def com_voting_time(df_ref, df_com_year_, year):
     #create the df
     years_ = [int(year)]*(df_com_year_['Community'].max()+1)
     com = list(range(df_com_year_['Community'].max()+1))
-    df_stat_com = pd.DataFrame(columns=['Year', 'Com_nbr', 'Mean_voting_time', 'Median_voting_time'])
+    df_stat_com = pd.DataFrame(columns=['Year', 'Com_nbr', 'Median_voting_time'])
     df_stat_com['Year'] = years_
     df_stat_com['Com_nbr'] = com
-    df_stat_com['Mean_voting_time'] = mean_voting_time
     df_stat_com['Median_voting_time'] = median_voting_time
     
     return df_stat_com
@@ -1318,7 +1312,7 @@ def plot_voting_time_per_com(df, years):
         year (list): Specific years on which we want our plot
     """
     # Tranform the df in an adequate form
-    df_melt = pd.melt(df[df['Year'].isin(years)], id_vars=['Com_nbr', 'Year'], value_vars=['Mean_voting_time', 'Median_voting_time'],
+    df_melt = pd.melt(df[df['Year'].isin(years)], id_vars=['Com_nbr', 'Year'], value_vars=['Median_voting_time'],
                         var_name='Vote Type', value_name='Pourcentage')
 
     # Create the plot
@@ -1350,7 +1344,7 @@ def plot_voting_time_on_whole_year(df):
     # Add labels and title
     plt.xlabel('Year')
     plt.ylabel('Voting Time (hours)')
-    plt.title('Mean and Median Voting Time per Year')
+    plt.title('Median Voting Time per Year')
 
     # Add legend
     plt.legend(title='Statistic')
