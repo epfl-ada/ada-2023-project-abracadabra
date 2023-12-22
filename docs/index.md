@@ -22,7 +22,7 @@ EXAMPLE ROUND NUMBER 7
 
 ADD TABLEAU
 
-<iframe src="assets/img/time_series/pdf_voting_time.png" width="1200px" height="530px" frameborder="0" position="relative">Histogram of voting time</iframe>
+<img src="assets/img/time_series/pdf_voting_time.png" width="750px" height="530px" frameborder="0" position="relative">Histogram of voting time</img>
 
 Once this processing step done, we ended up with a heavy tailed distribution of voting times with a median of 2 days, consistent over the years. 
 
