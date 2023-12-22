@@ -527,7 +527,7 @@ def plot_prediction_scores(scores, plot=None):
     for metric, ax in zip(metrics, axes):
         # Plot the results
         sns.lineplot(y=scores[metric], x=scores.nb_first_votes, ax=ax, errorbar=('ci', 95))
-        ax.set_ylim(0.6, 1.01)
+        ax.set_ylim(0.5, 1.01)
         ax.set_xlim(scores.nb_first_votes.min(), scores.nb_first_votes.max())
         ax.set_title(metric + ' of the prediction')
         ax.set_xlabel('Number of first votes')
@@ -600,7 +600,10 @@ def plot_mean_std_time(df, plot=None):
     stds = data.groupby(['Source', 'Year'])['Voting_time'].std().reset_index()
     
     fig, ax = plt.subplots(1, 2, figsize=(15, 5))
-    sns.histplot(data=means, x='Voting_time', hue='Year', ax=ax[0], palette='CMRmap', multiple='stack')
+    if means.Year.nunique() == 1:
+        sns.histplot(data=means, x='Voting_time', ax=ax[0], palette='CMRmap')
+    else:
+        sns.histplot(data=means, x='Voting_time', hue='Year', ax=ax[0], palette='CMRmap', multiple='stack')
     ax[0].set_title('Mean voting time')
     sns.histplot(data=stds, x='Voting_time', hue='Year', ax=ax[1], palette='CMRmap', multiple='stack')
     ax[1].set_title('Standard deviation of voting time')
