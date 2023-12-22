@@ -34,8 +34,9 @@ To extract the timing of votes, we used the timestamps given in the raw data and
 By seeing the distribution of voting times, we were surprised to discover a bimodal distribution (when using a log scale) and in conjunction with our idea of splitting voters into two groups, we were tempted to explain this phenomenon as indicating the actual existence of two groups of voters separated by their voting time. However, after some investigation of the data and looking into the literature about the RfA rules, we quickly realized that this bimodal distribution can actually be easily explained by the fact that some targets that were not elected would be re-nominated and thus would have a second round of votes (or even more). After delving deeper into the data and with the information we found on the RfA process, we were able to define properties of the voting time enabling us to distinguish multiple rounds of votes for a given target. We could also check that the resulting rounds were consistent with the data by extracting some comments coherent with our assumptions, for example:
 </div>
 
+<img src="assets/img/time_series/table_emma.jpg" width="750px" height=auto frameborder="0" position="relative">
 
-<img src="assets/img/time_series/pdf_voting_time.png" width="750px" height=auto frameborder="0" position="relative">
+
 
 
 
@@ -43,7 +44,7 @@ Once this processing step done, we ended up with a heavy tailed distribution of 
 
 
 
-<img src="assets/img/time_series/table_emma.jpg" width="750px" height=auto frameborder="0" position="relative">
+<img src="assets/img/time_series/pdf_voting_time.png" width="750px" height=auto frameborder="0" position="relative">
 
 
 <div align="justify">
