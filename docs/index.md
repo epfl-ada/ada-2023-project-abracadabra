@@ -38,30 +38,50 @@ To carry on in the present manner, we decided to focus on votes themselves, in p
 
 <img src="assets/img/time_series/median_quartiles_over_time.png" width="750px" height=auto frameborder="0" position="relative">
 
-
 Much to our surprise, we saw that the outcome of an election was in fact determined rather quickly in most cases, as suggests the clear separation of means at the beginning of the election (after aggregating all rounds for all targets) for all successful and failed nominations (left figure). This plot also allowed us to verify that the proportion of positive and negative votes was indeed correlated to the final decision of the election, as suggests the absence of overlap of confidence intervals of the means. To go further, we also computed the evolution of the quartiles and the median of votes over time to learn about the dispersion of the trends and it is clear that the distributions are clearly distinct this time as well (right figure), with again a clear gap at the very beginning of the election, that only slightly decreases.
 
 It is therefore obvious that the outcome of an election is determined very quickly and that votes that follow mostly go along with it, only slightly alleviating the initial trend. To go further in this analysis, we decided to implement a classification model enabling to predict if an admin will be elected or not only given the first votes input.
 
 <img src="assets/img/time_series/prediction_scores.png" width="750px" height=auto frameborder="0" position="relative">
 
-XXXXX
+We chose to evaluate predictions of our model with the accuracy, precision and recall metrics in order to have a better idea of how predictions perform. Obtained results are consistent with what we observed previously, namely the performance plateau is reached very quickly for the three metrics. By studying furthermore the curve values, we were able to see that the accuracy is relatively high (reaching a plateau at 0.87), but knowing the imbalance in the quantity of successful nominations compared to failed ones (62% of targets are accepted), it is very likely that this metric is biased if for instance the predicted model easily predicts that nominations are accepted. In order to avoid this bias, we preferred to focus on the precision and recall metrics. Given the results, it seems that the model generates very few false negatives, as suggests the recall value that reaches a plateau at 93%, and stays relatively stable, no matter the number of votes considered. Precision on the other hand is very similar to the accuracy, and therefore made us conclude that the errors of the model are mainly false positives.
+
+In the end, it seems that in most cases, the first votes input are a good indicator of whether a request will be rejected or not. It is however harder to know with certainty if it will be accepted since in a number of cases, first votes are in favor of requests that will be rejected eventually. This is easily illustrated when looking at the distribution of votes over time for successful and failed requests.
 
 <img src="assets/img/time_series/hist_vote_over_time.png" width="750px" height=auto frameborder="0" position="relative">
 
-XXXXXX
+We see in fact that despite that the distributions are clearly different and that the rejected requests are more negative than the accepted ones, they still partially overlap, in particular in the positive part of the voting time distribution.
+
+Two considerations are relevant there :
+Firstly, we can successfully predict with such accuracy the result of an election from the first votes input. This makes us think that there is a possibility that the first negative votes influence the following votes, and therefore may determine the election outcome prematurely. It would therefore be interesting to verify if the correlation we observed between the first votes and the final outcome is causal and indicates an influence, or if other factors are implied that can explain both the initial negative trend and the final outcome of the election.
+
+Secondly, for cases in which the first votes are rather positive, it is more difficult to predict a final outcome of the of the election. This begs to consider the possibility that a vote or a group of votes input later in the election may influence the final outcome of the election.
+
+In order to effectively answer both these questions, and thus have a more nuanced vision of votes that compose an election, we decided to use comments that are at our disposal. In fact, comments are a very rich source of information that the votes do not give by themselves, since votes are just binary values, and as such do not allow to figure out the intensity and the real intension of a voter. Using comments therefore allows us to have a better view of votes and that way maybe be more nuanced in our analysis.
+
+Our first approach to use comments was to perform a sentiment analysis on the comments in order to extract the polarity of each comment so that we have an idea of the intensity of votes, since such an analysis generates a continuous value score between -1 and 1 for a given text, -1 meaning the text is totally negative, neutral if it is 0, and totally positive if it is 1.
+
 
 <img src="assets/img/sentiment_analysis/hist_sentiment.png" width="750px" height=auto frameborder="0" position="relative">
 
-XXXX
+We can already see that the majority of comments are neutral and that positive comments are more frequent that negative comments. To go further, we decided to see if those proportions were constant over years.
 
 <img src="assets/img/sentiment_analysis/pie_sentiment_year.png" width="850px" height=auto frameborder="0" position="relative">
 
-XXX
+On these graphs we see a quite surprising result. We were expecting that the proportions of positive and negative comments stay constant over years, but it seems that it is not the case. In fact, we observed over years a clear decrease of the number of neutral comment for the benefit of positive and negative comments. This leads us to believe that over years, voters are more and more prone to express their opinion more decisively in the comments, which is at our advantage since it enables to get more information on the reasons that motivate voters to vote for or against a certain request, and thus have a better view of which parameters are implied in the decision process.
+
+À partir de ces nouvelles données, nous avons donc décidé de reproduire les analyses précédentes en utilisant les scores de sentiment à la place des votes dans l'espoir d'avoir des résultats encore plus marqués que ceux que nous avons obtenus jusqu'à présent. Malheureusement, nous avons assez rapidement dû nous rendre à l'évidence que les scores de sentiment n'étaient au final pas suffisamment polarisés pour nous permettre d'avoir des résultats plus distincts que ceux que nous avons déjà obtenus.
+
+From this new data, we decided to reproduce previous analyses by using sentiment analysis scores instead of votes, while hoping to get more pronounced results that what we got so far. Unfortunately, we quickly realized that sentiment scores were not polarized enough to give us more distinct results than what we already had.
+
 
 <img src="assets/img/time_series/median_quartiles_over_time_sentiment.png" width="750px" height=auto frameborder="0" position="relative">
 
-XXXX
+In fact, as suggests the above figure, we can see that the trend curves are way too close to get any relevant conclusion, despite that the accepted requests are effectively slightly less positive than rejected requests. We can still note that the values dispersion is bigger with sentiment scores than votes despite that, with most comments being neutral, we were expecting to have closer values instead.
+In the end, we had to accept that the distribution of sentiment scores over time was mostly the consequence of the score distribution, and not a consequence of the success or failure of a request.
+
+This failed tentative did not stop us, and we still wanted to investigate comments in other ways. In fact, we realized that the positive or negativity of comments is not a relevant factor to take into account, and that the reasoning behind votes is more complex. We then decided to look at the semantics of the comments. In particular, we decided to use topic modelling in order to extract the main topics of the comments and have an idea of what is discussed in the comments.
+
 --------------------------
 
 ## *Topic analysis* 
