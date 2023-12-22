@@ -932,25 +932,28 @@ def plot_maxJac_connected_layers(nodes, max_jacquard_similarities):
 
     plt.figure(figsize=(20,10))
     for edge in edges:
-        plt.plot([int(edge[0][0]), int(edge[1][0])], [int(edge[0][1]), int(edge[1][1])], linewidth=edge[2]*20, color='black')
+        plt.plot([int(edge[0][0]), int(edge[1][0])], [int(edge[0][1]), int(edge[1][1])], linewidth=edge[2]*30, color='black', alpha=min(edge[2]*9, 1))
     plt.scatter([int(node[0]) for node in nodes], [int(node[1]) for node in nodes], s=[int(node[2]) for node in nodes], color='blue', alpha=1)
     plt.show()
     
 def plot_connected_layers(nodes, edges):
     plt.figure(figsize=(20,10))
     for edge in edges:
-        plt.plot([int(edge[0][0]), int(edge[1][0])], [int(edge[0][1]), int(edge[1][1])], linewidth=edge[2]*20, color='black', alpha=min(edge[2]*9, 1))
-    plt.scatter([int(node[0]) for node in nodes], [int(node[1]) for node in nodes], s=[int(node[2]) for node in nodes], color='blue', alpha=1)
+        plt.plot([int(edge[0][0]), int(edge[1][0])], [int(edge[0][1]), int(edge[1][1])], linewidth=edge[2]*40, color='black', alpha=max(min(edge[2]*9, 1), 0.45))
+    plt.scatter([int(node[0]) for node in nodes], [int(node[1]) for node in nodes], s=[int(node[2]) for node in nodes], color='red', alpha=1)
     plt.show()
 
-def plot_connected_with_topic(nodes, edges, model, y_offset=0.2):
+def plot_connected_with_topic(nodes, edges, model, y_offset=0.32):
     plt.figure(figsize=(20,10))
     plt.title(f'Model : {model}-topics, Communities and Topics evolution over the years')
-    for edge in edges:
-        plt.plot([int(edge[0][0]), int(edge[1][0])], [int(edge[0][1]), int(edge[1][1])], linewidth=edge[2]*20, color='black', alpha=min(edge[2]*9, 1))
-    plt.scatter([int(node[0]) for node in nodes], [int(node[1]) for node in nodes], s=[int(node[2]) for node in nodes], color='blue', alpha=1)
+    plt.scatter([int(node[0]) for node in nodes], [int(node[1]) for node in nodes], s=[int(node[2]) for node in nodes], color='red', alpha=1, zorder=9)
+    font_dict = {"family": "serif", "color": "orange", "size": 10}
+    bbox_dict = {"facecolor": "w", "edgecolor":"none"}
     for node in nodes:
-        plt.text(int(node[0]), int(node[1])+y_offset, f"T-{node[3]}-{node[4]}", color='orange', alpha=1, ha='center')
+        plt.text(int(node[0]), int(node[1])+y_offset, f"T-{node[3]}-{node[4]}", fontdict=font_dict, bbox=bbox_dict, alpha=1, ha='center', zorder=10)
+    for edge in edges:
+        plt.plot([int(edge[0][0]), int(edge[1][0])], [int(edge[0][1]), int(edge[1][1])], linewidth=edge[2]*40, color='black', alpha=max(min(edge[2]*9, 1), 0.45), zorder=7)
+    plt.ylim(-1, 6)
     plt.show()
 
 
