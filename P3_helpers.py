@@ -18,7 +18,6 @@ import re
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from sklearn.feature_extraction.text import CountVectorizer
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from textblob import TextBlob
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from nltk.corpus import stopwords
@@ -744,14 +743,14 @@ def get_LDA_model(comments_series, num_topics=3, passes=10,
                   lemmatize=False):
     
     tokenized_comments = tokenize_comments(comments_series)
-    if lemmatize:
-        tokenized_comments = lemmatize_comments(tokenized_comments)
     if stopwords:
         tokenized_comments = remove_stopwords(tokenized_comments)
     if ponctuation:
         tokenized_comments = remove_ponctuation(tokenized_comments)
     if fine_tune_stopwords:
         tokenized_comments = remove_fine_tune_stopwords(tokenized_comments)
+    if lemmatize:
+        tokenized_comments = lemmatize_comments(tokenized_comments)
     dictionary = get_dict_representation(tokenized_comments)
     bow_corpus = get_bow_representation(tokenized_comments, dictionary)
     lda_model = init_LDA_model(bow_corpus, dictionary, num_topics=num_topics, passes=passes)
@@ -803,7 +802,7 @@ def topic_dict_function(path_dir='./topic_dicts'):
                 topic_dict['from_' + filename.split('_')[1]] = json.load(f)
     for key, value in topic_dict.items():
         for k, v in value.items():
-            topic_dict[key][k] = parse_topic_str(v, threshold=0.01)
+            topic_dict[key][k] = parse_topic_str(v, threshold=0.005)
     return topic_dict
 
 
@@ -813,12 +812,10 @@ def topic_str_plot(topic_dict):
         build = ''
         counter = 0 
         for theme, tuples_list in themes_dict.items():
-            build += f'Theme {theme}:'
+            build += f'The topic {theme} composition:'
             for x,y in tuples_list:
-                build += f' {x} ({y:.4f}),'
+                build += f' {x} ({y:.3f}),'
                 counter += 1
-                if counter % 3 == 0:
-                    build += '\n'
             build = build[:-1] + '\n\n'
         topic_description_dict[model] = build[:-2]
     return topic_description_dict
