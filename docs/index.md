@@ -205,16 +205,25 @@ Fourth the nine topics model with its topic word representations:
 
 We see that the more represented topics (top 1-2) across all the models are always strongly linked to words related to edits and what seems to be the quality of these edits. 
 
+<div align="justify">
 For the model with 3 topics, the topic being nearly 50% in first position for a given comment is mainly composed of “support” and “good” (10% and 5.8%) and quickly after “editor”, “work” and “contributor” (2.4%, 1.9% and 1.1%). 
+</div>
 
+<div align="justify">
 For the model with 5 topics, the most relevant topic is the 3rd (38.3%) followed by the 1st (23.1%) and 4th (20.4%). The 3rd topic is equivalent to the first topic from the model with 3 topics. The 1st topic (model with 5 topics) seems to be quite general with top words being (in order): ”admin”, “user”, “think”, “vote”, “people”, … Nonetheless there is a mention of “editor” with a topic representation proportion of 0.06%. On the other hand, the 4th topic is mostly composed with “edits”, “edit” (note that it is strange since both of them should be mapped to the same root word, but it does not affect our observation too deeply), “wikipedia” and “oppose” (4.7%, 2.6%, 2.6%, 2.5%). We see again the prevalence of topic related with “edit(s)” but on the contrary this topic is related with “oppose” rather than “support”, so we observe that the “edit(s)” related topics are present in both support or oppose side of the vote, which may indicates a special importance with respect to the election result. 
+</div>
 
+<div align="justify">
 For the model with 7 topics, it is less clear but we can see in the 5th topic (one of the most relevant topics with equality to 0th topic) that we found again description words like “editor”, “work” and “contributor”.
+</div>
 
+<div align="justify">
 For the model with 9 topics we see that the most appearing topic in first position (the 4th) is also composed of words referring to edits and work done: “editor”, “contributor” and “tool” (2.4%, 1.4% and 1.3%). The second most appearing topic in first position (the 0th) is positive and also has work related words and edit theme references. 
+</div>
 
+<div align="justify">
 Generally speaking, it seems that the most prevalent topics among the models all refer to the activity and amount of work provided for the nominees as editors on the platform. This information is particularly interesting in the sense that it reveals that a key aspect motivating source votes is very concrete and objective. To find out more about how closely this observation actually corresponds to the reality of the facts, we're going to explore user activity on Wikipedia in greater depth to link it to the elections with the help of a second dataset.
-
+</div>
 --------------------------
 
 ## *Users activity: a concret factor shaping the election outcomes* 
