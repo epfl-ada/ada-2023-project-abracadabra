@@ -126,11 +126,11 @@ From this new data, we decided to reproduce previous analyses by using sentiment
 <img src="assets/img/time_series/median_quartiles_over_time_sentiment.png" width="750px" height=auto frameborder="0" position="relative">
 
 
-In fact, as the above figure suggests, we can see that the trend curves are way too close to get any relevant conclusion, despite that the accepted requests are effectively slightly less positive than rejected requests. We can still note that the values dispersion is bigger with sentiment scores than votes despite that, with most comments being neutral, we were expecting to have closer values instead.
+As can be seen on the figure above, the trend curves are way too close to get any relevant conclusion, despite that the accepted requests are effectively slightly less positive than rejected requests. We can still note that the values dispersion is bigger with sentiment scores than votes despite that, with most comments being neutral, we were expecting to have closer values instead.
 In the end, we had to accept that the distribution of sentiment scores over time was mostly the consequence of the score distribution, and not a consequence of the success or failure of a request.
 
+But this failed tentative did not stop us ! We still wanted to investigate comments in other ways. In fact, we realized that the positive or negativity of comments is not a relevant factor to take into account, and that the reasoning behind votes is more complex. We then decided to look at the semantics of the comments. In particular, we used topic modeling in order to extract the main topics of the comments and have an idea of what is discussed in the comments.
 
-This failed tentative did not stop us, and we still wanted to investigate comments in other ways. In fact, we realized that the positive or negativity of comments is not a relevant factor to take into account, and that the reasoning behind votes is more complex. We then decided to look at the semantics of the comments. In particular, we used topic modeling in order to extract the main topics of the comments and have an idea of what is discussed in the comments.
 
 
 </div>
@@ -203,7 +203,7 @@ For the model with 7 topics, it is less clear but we can see in the 5th topic (o
 
 For the model with 9 topics we see that the most appearing topic in first position (the 4th) is also composed of words referring to edits and work done: “editor”, “contributor” and “tool” (2.4%, 1.4% and 1.3%). The second most appearing topic in first position (the 0th) is positive and also has work related words and edit theme references. 
 
-Overall the prevalent topics across models all have references to the work done by the vottee as editors and their contributions. So we will in the next section explore more about the edits with a more direct source through our secondary dataset - see the resources tab.
+Overall the prevalent topics across models all have references to the work done by the votee as editors and their contributions. In the next section we will explore further about the edits with a more direct source through our secondary dataset - see the resources tab.
 
 --------------------------
 
@@ -319,7 +319,7 @@ The first particular thing we can observe in the above graph is that the sizes a
 
 Communities seem to be more "stable" from 2004 to 2007, there are really thick links between some communities in this period of time. On the other hand, on the opposite side of the graph, links are of the same thickness, for example the community 2 of year 2012 is connected the same way to the communities of 2013 - in comparison with the community 0 from year 2005 with the ones from 2006.
 
-This “stable” state from early years that faded out in such ways that communities are more “fluid” in their evolution can be explained by one of our previous observations: sources vote, in proportion more in early years of our dataset than in the last years. Since our communities are based on similarity of voting choices, if they do not vote for the same target (because they do not vote for a majority of the election) they cannot be part of the same community.
+This “stable” state from early years that faded out in such ways that communities are more “fluid” in their evolution can be explained by one of our previous observations: the number of source’s vote. Indeed, there is in proportion more votes in the early years of our dataset than in the last years. Since our communities are based on similarity of voting choices, if they do not vote for the same target (because they do not vote for a majority of the election) they cannot be part of the same community.
 
 These observations seem to underline the fact that there would not be stable groups of voters that vote the same way, at least in the latest years. 
 
