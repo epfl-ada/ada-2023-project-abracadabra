@@ -141,7 +141,7 @@ In the end, we had to accept that the distribution of sentiment scores over time
 </div>
   
 <div align="justify">
-But this failed tentative did not stop us ! We still wanted to investigate comments in other ways. In fact, we realized that the positive or negativity of comments is not a relevant factor to take into account, and that the reasoning behind votes is more complex. We then decided to look at the semantics of the comments. In particular, we used topic modeling in order to extract the main topics of the comments and have an idea of what is discussed in the comments.
+But this failed attempt did not stop us ! We still wanted to investigate comments in other ways. In fact, we realized that the positive or negativity of comments is not a relevant factor to take into account, and that the reasoning behind votes is more complex. We then decided to look at the semantics of the comments. In particular, we used topic modeling in order to extract the main topics of the comments and have an idea of what is discussed in the comments.
 </div>
 
 ## *Topic analysis: What are the decisive aspects of the decision-making process ?* 
