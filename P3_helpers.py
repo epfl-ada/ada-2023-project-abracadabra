@@ -269,9 +269,10 @@ def pdf_voting_time(df, plot=None):
         df (pd.DataFrame): Dataframe containing the data of the votes
     """
     data = df[(df['Voting_time'] != 0) & (df['Voting_time'] < 24*8)]
+    median = np.median(data.Voting_time)
     fig, ax = plt.subplots(figsize=(10,4))
     sns.histplot(data=data, x='Voting_time', ax=ax, bins=100, stat='percent', log_scale=(False, False), hue='Year', palette='CMRmap', multiple='stack')
-    ax.set_title('Histogram of voting time')
+    ax.set_title('Histogram of voting time (median = {:.0f} hours)'.format(median))
     ax.set_xlabel('Voting time in the round (hours)')
     ax.set_ylabel('Percentage of votes')
     ax.set_xlim(0, 24*8)
@@ -604,6 +605,8 @@ def plot_mean_std_time(df, plot=None):
         sns.histplot(data=means, x='Voting_time', ax=ax[0], palette='CMRmap')
     else:
         sns.histplot(data=means, x='Voting_time', hue='Year', ax=ax[0], palette='CMRmap', multiple='stack')
+    ax[0].set_xlim(np.min(means.Voting_time), np.max(means.Voting_time))
+    ax[1].set_xlim(np.min(stds.Voting_time), np.max(stds.Voting_time))
     ax[0].set_title('Mean voting time')
     sns.histplot(data=stds, x='Voting_time', hue='Year', ax=ax[1], palette='CMRmap', multiple='stack')
     ax[1].set_title('Standard deviation of voting time')

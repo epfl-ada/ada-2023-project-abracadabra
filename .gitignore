@@ -19,3 +19,12 @@ nbTopics_*
 # Remove the figures
 Figures/
 Figures/*
+Figures/cdf_voting_time.png
+Figures/distribution_voting_time.png
+Figures/hist_progressive_mean_over_vote_number.png
+Figures/hist_progressive_mean_over_voting_time.png
+Figures/mean_ci_over_n_votes.png
+Figures/mean_ci_over_time.png
+Figures/median_quartiles_over_n_votes.png
+Figures/median_quartiles_over_time.png
+Figures/prediction_scores.png
