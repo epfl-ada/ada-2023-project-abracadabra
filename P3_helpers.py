@@ -536,6 +536,9 @@ def plot_prediction_scores(scores, plot=None):
     if plot is None:
         plt.savefig('Figures/prediction_scores.png', dpi=300)
         plt.show()
+    elif plot == 'sentiment':
+        plt.savefig('Figures/prediction_scores_sentiment.png', dpi=300)
+        plt.show()
     else:
         plt.savefig('Figures/prediction_scores_' + plot + '.png', dpi=300)
         plt.close()
