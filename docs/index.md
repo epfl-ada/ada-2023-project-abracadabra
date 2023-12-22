@@ -16,10 +16,7 @@ blala
 ## *PART 1* 
 
 ### *Exemple how to add img* 
-<div class="image-container">
-  <img src="assets/img/crepe.jpg" alt="Image 1">
-  <img src="assets/img/crepe.jpg" alt="Image 2">
-</div>
+<iframe src="assets/img/crepe.jpg width="750px" height="530px" frameborder="0" position="relative">Title</iframe>
 
 bislls
 
