@@ -11,8 +11,7 @@ import json
 import os
 import re
 
-import vaderSentiment
-import spacy, nltk, gensim, sklearn
+import spacy
 import pyLDAvis.gensim_models
 import re
 
@@ -638,6 +637,29 @@ def add_comm_to_df(df):
 
         df_by_year = pd.concat([df_by_year, df_year])
     return df_by_year
+
+def get_progressive_mean_comm(df, communities):
+    """ Compute the progressive mean of the votes of a specific community in each round (i.e. the mean of the votes at each time step)
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+        
+    Returns:
+        df (pd.DataFrame): Dataframe containing the data of the votes with the progressive mean of the votes in each round
+    """
+    df_by_year = pd.DataFrame()
+
+    for year, comm in communities:
+        df_comm = df[(df['Year'] == year) & (df['Community'] == comm)]
+        if len(df_comm.groupby(['Target', 'Round']).first()) == 1:
+            print(df_comm)
+            df_comm['progressive_mean'] = df_comm.sort_values('Voting_time').Vote.cumsum() / np.arange(1, len(df_comm)+1)
+        else:
+            df_comm = get_progressive_mean(df_comm)
+        df_by_year = pd.concat([df_by_year, df_comm])
+
+    return df_by_year 
+
 
 
 
@@ -1822,6 +1844,11 @@ def removing_comment_headers(df):
 
 
 def sentiment_analysis(df):
+    #Parse the comments to a new column
+    df['Parsed_Comment'] = df['Comment'].apply(get_parsed_comment)
+    # Removing strings for sentiment analysis without headers (support, oppose, neutral)
+    df = removing_comment_headers(df)
+
     analyzer = SentimentIntensityAnalyzer()
     df["sent_score"] = [analyzer.polarity_scores(sent)['compound'] for sent in df["Parsed_Comment"]]
     
@@ -1834,7 +1861,6 @@ def plot_compound_sentiment_score(df):
 
     axs.hist(df["sent_score"], bins=15)
     axs.set_xlim([-1, 1])
-    axs.set_ylim([0, 195647])
     axs.set_xlabel('Compound sentiment')
     axs.set_ylabel('Number of comments')
     axs.set_title('Compound sentiment scores')
@@ -1938,38 +1964,22 @@ def com_vote_sentiment_analysis(df_ref, df_com_year_, year):
 
 
 def community_sentiment_analysis_per_year(df):
+    # Vectorizing the df    
+    data = comment_vectorizing(df)
+    # Removing comments of vector size = 0 for the sentiment analysis by community
+    data = sentiment_remove_vectorSize_zero(data)
 
-    years = df['Year'].unique()
-    df_com = pd.DataFrame(columns = ['Year', 'Community_df'])
-    for year in years:
-        path = 'Community/df_community_'+ str(int(year)) + '.csv'
-        df_ = load_com_csv(path)
-        df_com.loc[len(df_com)] = [year, df_]
-
-    df_com_stat = pd.DataFrame(columns = ['Year'])
-    df_com_stat['Year'] = years
-
-    list_nbr_com = df_com['Community_df'].apply(lambda x: x['Community'].max()+1)
-    df_com_stat['Nbr_of_com'] = list_nbr_com
-
-    list_nbr_in_com_ = df_com['Community_df'].apply(lambda x: x.groupby('Community').size())
-    df_com_stat['Com_size'] = list(list_nbr_in_com_.values)
-    #remove nan values when the number of community is lower
-    list_nbr_in_com_filtered = df_com_stat['Com_size'].apply(lambda x: x[~np.isnan(x)])
-    df_com_stat['Com_size'] = list_nbr_in_com_filtered
-    df_com_stat
-
-    years = df['Year'].unique()
+    years = data['Year'].unique()
     dict_com = {}
     for year in years:
-        path = 'Community/df_community_'+ str(int(year)) + '.csv'
+        path = 'df_community_'+ str(int(year)) + '.csv'
         df_ = load_com_csv(path)
         dict_com[str(int(year))]=df_
 
     df_stat_com = pd.DataFrame(columns=['Year', 'Com_nbr', 'Pos_vote_prop', 'Neg_vote_prop', 'Neu_vote_prop', 'Pos_sentScore_prop', 'Neg_sentScore_prop', 'Neu_sentScore_prop'])
     for year in dict_com.keys():
         df_com_year = dict_com[str(year)]
-        stat_com = com_vote_sentiment_analysis(df, df_com_year, year)
+        stat_com = com_vote_sentiment_analysis(data, df_com_year, year)
         df_stat_com = pd.concat([df_stat_com, stat_com], ignore_index=True)
         
     return df_stat_com
