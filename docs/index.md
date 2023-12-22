@@ -4,21 +4,30 @@
 
 <div align="justify">
 How wonderful are the online communities! In the vast landscape of the digital era, the emergence of online communities stands as a demonstration of the transformative power of the internet. This virtual world offers a unique and powerful means for people from every part of the globe to connect and exchange ideas, fostering the development of new tools and platforms from collaborative efforts, of which Wikipedia is a prime example. However, the growth of these communities brings along a new set of challenges related to the organization and management at such a large scale: How can thousands to millions of users make a decision together and agree on common rules and goals?
- \\
+
+ 
 To address this question, we study the case of Wikipedia, the largest online encyclopedia, which has been built and maintained by millions of volunteers over the past two decades. In particular, we focus on the English Wikipedia, which is the largest Wikipedia edition with 7 million articles and 46 million registered users and for which we have access to a comprehensive dataset spanning from 2003 to 2013, focusing on Wikipedia elections, namely the : “Requests for Adminship” (RfA), as well as a dataset of the number of monthly edits per user over the same period.
 The relevance of choosing Wikipedia as a case study is twofold. First, Wikipedia is a unique example of a large-scale online community that has been able to sustain itself over the years and despite its impressive growth. Second, Wikipedia has a well-defined and transparent process for electing administrators with publicly available data, which makes it an ideal case study for understanding the dynamics of collective decision-making in online communities.
-\\
+
+
+
 To introduce our analysis, let's start by presenting our main dataset: Wikipedia Requests for Adminship. This dataset contains the collection of votes cast for the users applying to become administrators of the platform. We therefore have for each of them (referred to as Target) the list of people who took part in the election (referred to as Source) and their respective votes, accompanied in most cases by a comment from the voter. We also have access to the date and time of each vote, as well as the final result of each election. Using all this information, our first approach was to look at the temporal aspect of the votes.
-\\
+
+
+
 </div>
 ## *Voting time and dynamics: How and when are the outcomes of elections settled?s* 
 <div align="justify">
   
 One first step towards understanding the process of collective decision-making is to study the dynamics of voting behavior over time. In particular, we are interested in the temporal patterns of votes and how they relate to the final outcome of the election.
 To extract the timing of votes, we used the timestamps given in the raw data and defined the first vote casted for a target as the starting point of an election round. From there, we wondered if we could extract groups of voters that would vote earlier or later in the election which would be indicative of influential and influenced voters respectively.
-\\
+
+
+
 <img src="assets/img/time_series/hist_voting_time.jpg" width="750px" height=auto frameborder="0" position="relative">
-\\
+
+
+
 By seeing the distribution of voting times, we were surprised to discover a bimodal distribution (when using a log scale) and in conjunction with our idea of splitting voters into two groups, we were tempted to explain this phenomenon as indicating the actual existence of two groups of voters separated by their voting time. However, after some investigation of the data and looking into the literature about the RfA rules, we quickly realized that this bimodal distribution can actually be easily explained by the fact that some targets that were not elected would be re-nominated and thus would have a second round of votes (or even more). After delving deeper into the data and with the information we found on the RfA process, we were able to define properties of the voting time enabling us to distinguish multiple rounds of votes for a given target. We could also check that the resulting rounds were consistent with the data by extracting some comments coherent with our assumptions, for example:
 \\
 <img src="assets/img/time_series/pdf_voting_time.png" width="750px" height=auto frameborder="0" position="relative">
@@ -44,60 +53,60 @@ sources against the number of votes they cast.
 Once again, we observe no meaningful correlation between voting time and the number of votes cast by a source. We can therefore conclude that voting time does not play a decisive role in the process of electing Wikipedia administrators.
 \\
 To carry on in the present manner, we decided to focus on votes themselves, in particular on their evolution over time. More precisely, we wanted to know if supporting or opposing votes are homogeneous over time, or conversely if they diverge at a certain point to reinforce the final decision. We therefore computed the evolution of the mean of votes over time and for each election.
-\
+\\
 <img src="assets/img/time_series/mean_ci_over_time.png" width="750px" height=auto frameborder="0" position="relative">
-\
+\\
 <img src="assets/img/time_series/median_quartiles_over_time.png" width="750px" height=auto frameborder="0" position="relative">
-\
+\\
 Much to our surprise, we saw that the outcome of an election was in fact determined rather quickly in most cases ! This is suggested by the clear separation of means at the beginning of the election (after aggregating all rounds for all targets) for all successful and failed nominations (left figure). This plot also tells us that the proportion of positive and negative votes was indeed correlated to the final decision of the election, as suggests the absence of overlap of confidence intervals of the means. To go further, we also computed the evolution of the quartiles and the median of votes over time to learn about the dispersion of the trends and it is clear that the distributions are clearly distinct this time as well (right figure), with again a clear gap at the very beginning of the election, that only slightly decreases.
-\
+\\
 It is therefore obvious that the outcome of an election is determined very quickly and that votes that follow mostly go along with it, only slightly alleviating the initial trend. To go further in this analysis, we implemented a classification model enabling us to predict if an admin will be elected or not only given the first votes input.
-\
+\\
 <img src="assets/img/time_series/prediction_scores.png" width="750px" height=auto frameborder="0" position="relative">
-\
+\\
 We chose to evaluate predictions of our model with the accuracy, precision and recall metrics in order to have a better idea of how predictions perform. Obtained results are consistent with what we observed previously, namely the performance plateau is reached very quickly for the three metrics. By studying furthermore the curve values, we were able to see that the accuracy is relatively high (reaching a plateau at 0.87), but knowing the imbalance in the quantity of successful nominations compared to failed ones (62% of targets are accepted), it is very likely that this metric is biased if for instance the predicted model easily predicts that nominations are accepted. In order to avoid this bias, we preferred to focus on the precision and recall metrics. Given the results, it seems that the model generates very few false negatives, as suggests the recall value that reaches a plateau at 93%, and stays relatively stable, no matter the number of votes considered. Precision on the other hand is very similar to the accuracy, and therefore made us conclude that the errors of the model are mainly false positives.
-\
+\\
 Interestingly, it seems that in most cases, the first votes input are a good indicator of whether a request will be rejected or not. It is however harder to know with certainty if it will be accepted, since in a number of case, first votes are in favor of requests that will be rejected eventually. This is easily illustrated when looking at the distribution of votes over time for successful and failed requests.
-\
+\\
 <img src="assets/img/time_series/hist_vote_over_time.png" width="750px" height=auto frameborder="0" position="relative">
-\
+\\
 The distributions are in fact clearly different, that is, the rejected requests are more negative than the accepted ones. They still partially overlap however, in particular in the positive part of the voting time distribution.
-\
+\\
 Two considerations are relevant there :
 Firstly, we can successfully predict with such accuracy the result of an election from the first votes input. This makes us think that there is a possibility that the first negative votes influence the following votes, and therefore may determine the election outcome prematurely. It would therefore be interesting to verify if the correlation we observed between the first votes and the final outcome is causal and indicates an influence, or if other factors are implied that can explain both the initial negative trend and the final outcome of the election.
 Secondly, for cases in which the first votes are rather positive, it is more difficult to predict the final outcome of the election. This begs to consider the possibility that a vote or a group of votes input later in the election may influence the final outcome of the election.
-\
+\\
 To effectively answer both these questions and have a more nuanced vision of votes that compose an election, we decided to use comments that are at our disposal. Obviously, comments are a very rich source of information that the votes do not give by themselves as they do not express the intensity and the real intention of a voter. Using comments therefore allows us to have a better view of votes and that way maybe be more nuanced in our analysis.
-\
+\\
 Our first approach to use comments was to perform a sentiment analysis on the comments in order to extract the polarity of each comment so that we have an idea of the intensity of votes, since such an analysis generates a continuous value score between -1 and 1 for a given text, -1 meaning the text is totally negative, neutral if it is 0, and totally positive if it is 1.
-\
+\\
 <img src="assets/img/sentiment_analysis/hist_sentiment.png" width="750px" height=auto frameborder="0" position="relative">
-\
+\\
 We can already see that the majority of comments are neutral and that positive comments are more frequent that negative comments. To go further, we decided to see if those proportions were constant over years.
-\
+\\
 <img src="assets/img/sentiment_analysis/pie_sentiment_year.png" width="850px" height=auto frameborder="0" position="relative">
-\
+\\
 On these graphs we see a quite surprising result. We were expecting that the proportions of positive and negative comments stay constant over years, but it seems that it is not the case. In fact, we observed over years a clear decrease of the number of neutral comments for the benefit of positive and negative comments. This leads us to believe that over years, voters are more and more prone to express their opinion more decisively in the comments, which is at our advantage since it enables to get more information on the reasons that motivate voters to vote for or against a certain request, and thus have a better view of which parameters are implied in the decision process.
-\
+\\
 From this new data, we decided to reproduce previous analyses by using sentiment analysis scores instead of votes, while hoping to get more pronounced results that what we got so far. Unfortunately, we quickly realized that sentiment scores were not polarized enough to give us more distinct results than what we already had.
-\
+\\
 <img src="assets/img/time_series/median_quartiles_over_time_sentiment.png" width="750px" height=auto frameborder="0" position="relative">
-\
+\\
 In fact, as the above figure suggests, we can see that the trend curves are way too close to get any relevant conclusion, despite that the accepted requests are effectively slightly less positive than rejected requests. We can still note that the values dispersion is bigger with sentiment scores than votes despite that, with most comments being neutral, we were expecting to have closer values instead.
 In the end, we had to accept that the distribution of sentiment scores over time was mostly the consequence of the score distribution, and not a consequence of the success or failure of a request.
-\
+\\
 This failed tentative did not stop us, and we still wanted to investigate comments in other ways. In fact, we realized that the positive or negativity of comments is not a relevant factor to take into account, and that the reasoning behind votes is more complex. We then decided to look at the semantics of the comments. In particular, we used topic modeling in order to extract the main topics of the comments and have an idea of what is discussed in the comments.
-\
+\\
 </div>
 ## *Topic analysis: What are the decisive aspects of the decision-making process?* 
 <div align="justify">
-\
+\\
 In this part of the analysis we want to focus on understanding what matters the most in influencing the result of an election, by using the comments that voters may write while casting their votes. 
-\
+\\
 To do so we used topic modeling to see what topics are more prevalent amongst the comments. We use the Latent Dirichlet Allocation (LDA) algorithm to extract the topics. The prevalent hyperparameter of this method is the number of topics we want to extract, the number of latent dimensions. The LDA algorithm outputs, for each comment, the proportion of comments that can be attributed to each topic. And for each topic of the model we have the list of words, for each topic, with the likelihood of each word's association with that particular topic.
-\
+\\
 We chose to conduct the analysis for respectively three, five, seven, nine topics, to cover the maximum of the possible range given that comments are not very long - the median of the number of characters is 84 for a maximum length comment of 5638 characters. 
-\
+\\
 </div>
 **Model with 3 topics:**
 First the three topics model with its topic word representations (we only show words with a coefficient of participation in the topic bigger than 0.01 as for the rest of this analysis): 
@@ -161,7 +170,7 @@ Overall the prevalent topics across models all have references to the work done 
 ## *Users activity: a concret factor shaping the election outcomes* 
 <div align="justify">
 Let’s see if the number of edits is really an important feature for a target to be elected. Looking at the average number of edits made by targets in a 1-year period before and after the result of their last election, we observe the same inverted V shape, with the point indicating the election results, for people who were elected and rejected. Nevertheless we observe a significant difference between the two groups in terms of average number of edits, confirming what we had observed to be an important theme in comments across all years.
-\
+\<
 <img src="assets/img/edit/avg_edit_last_election.png" width="750px" height=auto frameborder="0" position="relative">
 \
 </div>
