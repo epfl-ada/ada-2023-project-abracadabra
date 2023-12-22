@@ -7,9 +7,6 @@ How wonderful are the online communities! In the vast landscape of the digital e
 To address this question, we study the case of Wikipedia, the largest online encyclopedia, which has been built and maintained by millions of volunteers over the past two decades. In particular, we focus on the English Wikipedia, which is the largest Wikipedia edition with 7 million articles and 46 million registered users and for which we have access to a comprehensive dataset spanning from 2003 to 2013, focusing on Wikipedia elections, namely the : “Requests for Adminship” (RfA), as well as a dataset of the number of monthly edits per user over the same period.
 The relevance of choosing Wikipedia as a case study is twofold. First, Wikipedia is a unique example of a large-scale online community that has been able to sustain itself over the years and despite its impressive growth. Second, Wikipedia has a well-defined and transparent process for electing administrators with publicly available data, which makes it an ideal case study for understanding the dynamics of collective decision-making in online communities.
 
-
---------------------------
-
 ## *Time Series analysis* 
 
 One first step towards understanding the process of collective decision-making is to study the dynamics of voting behavior over time. In particular, we are interested in the temporal patterns of votes and how they relate to the final outcome of the election.
@@ -81,8 +78,6 @@ In fact, as suggests the above figure, we can see that the trend curves are way 
 In the end, we had to accept that the distribution of sentiment scores over time was mostly the consequence of the score distribution, and not a consequence of the success or failure of a request.
 
 This failed tentative did not stop us, and we still wanted to investigate comments in other ways. In fact, we realized that the positive or negativity of comments is not a relevant factor to take into account, and that the reasoning behind votes is more complex. We then decided to look at the semantics of the comments. In particular, we decided to use topic modelling in order to extract the main topics of the comments and have an idea of what is discussed in the comments.
-
---------------------------
 
 ## *Topic analysis* 
 
@@ -205,7 +200,7 @@ Extracting the distinctive features, we can see that communities 2 and 4 in 2004
 
 Now let's see if the communities mentioned are indeed small. 
 
-<img src="assets/img/Figures_Gaelle/community_size_proportion_2004_2009.png" width="750px%" height=auto frameborder="0" position="relative">
+<img src="assets/img/Figures_Gaelle/community_size_proportion_2004_2009.png" width="750px" height=auto frameborder="0" position="relative">
 
 We can see that all these communities are actually small, confirming the observation made earlier that more features can be extracted from small communities, as these features are smoother and therefore less visible in larger ones.
 
@@ -219,7 +214,7 @@ Since our communities consist in the name of the sources, which is a set of uniq
 
 The way we display the similarities between the communities is through a graph in which the similarity is symbolized by a link, which is thicker for similar communities, and thinner for distant ones.
 
-XXX ?? —--------- figure “Jaccard similarity graph between sources in communities” —-- ??
+<img src="assets/img/community_evolutions/com_evo.png" width="750px" height=auto frameborder="0" position="relative">
 
 We then wanted to analyze the similarity of the different communities in terms of topics.
 
