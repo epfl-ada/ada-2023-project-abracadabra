@@ -885,21 +885,59 @@ def max_jacquard_sim(jacquard_similarities):
             max_sim[year][com1] = (key_max, round(value_max,3))
     return max_sim
 
-def edge_format_for_jsim(max_sim):
-    ... 
+def get_nodes_from_com_dict(com_dict):
+    nodes = []
+    for year, df in com_dict.items():
+        for comu in df['Community'].unique():
+            temp = df[df['Community'] == comu]
+            size = len(temp)
+            nodes.append((year, comu, size))
+    return nodes
 
-def get_directed_graph_for_jsim(network):
-    G = nx.DiGraph()
-    for layer, connections in network.items():
-        for node, (next_node, weight) in connections.items():
-            G.add_edge((layer.split('-')[0], node), (layer.split('-')[1], next_node), weight=weight)
-    return G
+def get_edges_from_jacquard_similarities(jacquard_similarities):
+    edges = set()
+    for years, map in jacquard_similarities.items():
+        x1 = years.split('-')[0]
+        x2 = years.split('-')[1]
+        for commu1, commuDictWeight in map.items():
+            for commu2, weight in commuDictWeight.items():
+                edges.add(((x1, commu1), (x2, commu2), weight))
+    return edges
 
-def plot_graph_jsim(G):
+def plot_maxJac_connected_layers(nodes, max_jacquard_similarities):
+    edges = set()
+    for years, map in max_jacquard_similarities.items():
+        x1 = years.split('-')[0]
+        x2 = years.split('-')[1]
+        for commu1, commu2Weight in map.items():
+            commu2 = commu2Weight[0]
+            edges.add(((x1, commu1), (x2, commu2), commu2Weight[1]))
+
+    plt.figure(figsize=(20,10))
+    for edge in edges:
+        plt.plot([int(edge[0][0]), int(edge[1][0])], [int(edge[0][1]), int(edge[1][1])], linewidth=edge[2]*20, color='black')
+    plt.scatter([int(node[0]) for node in nodes], [int(node[1]) for node in nodes], s=[int(node[2]) for node in nodes], color='blue', alpha=1)
+    plt.show()
     
-    return
+def plot_connected_layers(nodes, edges):
+    plt.figure(figsize=(20,10))
+    for edge in edges:
+        plt.plot([int(edge[0][0]), int(edge[1][0])], [int(edge[0][1]), int(edge[1][1])], linewidth=edge[2]*20, color='black', alpha=min(edge[2]*9, 1))
+    plt.scatter([int(node[0]) for node in nodes], [int(node[1]) for node in nodes], s=[int(node[2]) for node in nodes], color='blue', alpha=1)
+    plt.show()
 
-################### GENERATE COMMUNITY FROM BIPARTITE GRAPH #####################
+def plot_connected_with_topic(nodes, edges, model, y_offset=0.2):
+    plt.figure(figsize=(20,10))
+    plt.title(f'Model : {model}-topics, Communities and Topics evolution over the years')
+    for edge in edges:
+        plt.plot([int(edge[0][0]), int(edge[1][0])], [int(edge[0][1]), int(edge[1][1])], linewidth=edge[2]*20, color='black', alpha=min(edge[2]*9, 1))
+    plt.scatter([int(node[0]) for node in nodes], [int(node[1]) for node in nodes], s=[int(node[2]) for node in nodes], color='blue', alpha=1)
+    for node in nodes:
+        plt.text(int(node[0]), int(node[1])+y_offset, f"T-{node[3]}-{node[4]}", color='orange', alpha=1, ha='center')
+    plt.show()
+
+
+################### Community on bipartite graph #####################
 
 def create_bipartite_weight(sources, targets, weights):
     """ Create a bipartite weighted graph 
@@ -1340,7 +1378,7 @@ def compute_df_recall_accuracy_precision(df_ref, df_com_year_, year):
         FP = np.sum((df_com['Vote']!= df_com['Results']) & (df_com['Vote']==1))
         neutral = np.sum(df_com['Vote']==0)
         N = len(df_com['Vote'])
-        N_accuracy = len(df_com['Vote'])/ - np.sum(df_com['Vote']==0)
+        N_accuracy = len(df_com['Vote']) - neutral
         accuracy_ = (TP + TN)/N_accuracy
         if (TP == 0 & FN == 0) : recall_ = 0
         else: recall_ = TP / (TP + FN)
@@ -1352,7 +1390,7 @@ def compute_df_recall_accuracy_precision(df_ref, df_com_year_, year):
         precision.append(precision_)
         specificity.append(specificity_)
         neutral_vote_prop.append(neutral_vote_prop_)
-    
+
     #create the df
     years_ = [int(year)]*(df_com_year_['Community'].max()+1)
     com = list(range(df_com_year_['Community'].max()+1))
@@ -1366,6 +1404,7 @@ def compute_df_recall_accuracy_precision(df_ref, df_com_year_, year):
     df_stat_com['Neutral_vote_prop'] = neutral_vote_prop
    
     return df_stat_com
+    
 
 def plot_recall_accuracy_precision_per_com(df, years):
     """ Plot the recall, accuracy and precision for each community and for specific years
