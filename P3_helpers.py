@@ -1512,30 +1512,187 @@ def generate_user_revision_dataset(revisions_dataset, election_dataset):
     result_df_pivot['Result'] = result_df.groupby('user_name')['Result'].first()
     return result_df_pivot
 
-def plot_average_edit(data, x, mean_col = 'center', var_cols = ['low', 'up']):
+def plot_average_edit(data, x, mean_col = 'center', var_cols = ['lower', 'upper']):
 
     # Plot the evolution of the edit
     fig, ax = plt.subplots(figsize=(12, 5))
     sns.lineplot(x=x, y=mean_col, data=data, hue='Result', palette='tab10', ax=ax)
-    ax.fill_between(data[data.Result == -1][x], data[data.Result == -1][var_cols[0]], data[data.Result == -1][var_cols[1]], alpha=0.2, color='tab:blue')
-    ax.fill_between(data[data.Result == 1][x], data[data.Result == 1][var_cols[0]], data[data.Result == 1][var_cols[1]], alpha=0.2, color='tab:orange')
+    ax.fill_between(data[data.Result == -1.0][x], data[data.Result == -1.0][var_cols[0]], data[data.Result == -1.0][var_cols[1]], alpha=0.2, color='tab:blue')
+    ax.fill_between(data[data.Result == 1.0][x], data[data.Result == 1.0][var_cols[0]], data[data.Result == 1.0][var_cols[1]], alpha=0.2, color='tab:orange')
     ax.set_ylabel('Mean edit')
     ax.legend(handles=[plt.Line2D([0], [0], color='tab:blue', lw=4, label='Rejected'),
                         plt.Line2D([0], [0], color='tab:orange', lw=4, label='Elected')])
     return ax
 
+def plot_edit_voting_time(edit, time):
+  sum_revisions = edit.groupby('user_name')['revisions'].sum().reset_index()
+  merged_df = pd.merge(sum_revisions, 
+                     time.groupby('Source')['Voting_time'].mean().reset_index(), 
+                     left_on='user_name', 
+                     right_on='Source', 
+                     how='inner')
+  # Set a color palette
+  colors = sns.color_palette("viridis", as_cmap=True)
+
+  # Create a scatter plot with additional styling
+  plt.figure(figsize=(12, 8))
+  scatter = sns.scatterplot(x='Voting_time', y='revisions',data=merged_df, hue='Voting_time', palette=colors, size='Voting_time', sizes=(50, 200), edgecolor='w', linewidth=0.5)
+  sns.kdeplot(x='Voting_time', y='revisions', data=merged_df, fill=True, cmap='viridis', levels=30,thresh=0.015, ax=scatter)
+  # Customize the plot
+  plt.title('Scatter Plot of Sum of Revisions vs. Average Voting Time', fontsize=16)
+  plt.xlabel('Average Voting Time', fontsize=14)
+  plt.ylabel('Sum of Revisions', fontsize=14)
+  plt.legend(title='Average Voting Time', title_fontsize='12', loc='upper right', bbox_to_anchor=(1.25, 1))
+
+  # Add grid lines
+  plt.grid(True, linestyle='--', alpha=0.7)
+
+  plt.show()
+
+  #Zoom
+  # Set a color palette
+  colors = sns.color_palette("viridis", as_cmap=True)
+
+  # Create a scatter plot with additional styling
+  plt.figure(figsize=(12, 8))
+  scatter = sns.scatterplot(x='Voting_time', y='revisions',data=merged_df, hue='Voting_time', palette=colors, size='Voting_time', sizes=(50, 200), edgecolor='w', linewidth=0.5)
+  sns.kdeplot(x='Voting_time', y='revisions', data=merged_df, fill=True, cmap='viridis', levels=30,thresh=0.05, ax=scatter)
+  # Customize the plot
+  plt.title('Scatter Plot of Sum of Revisions vs. Average Voting Time (Zoom)', fontsize=16)
+  plt.xlabel('Average Voting Time', fontsize=14)
+  plt.ylabel('Sum of Revisions', fontsize=14)
+  plt.legend(title='Average Voting Time', title_fontsize='12', loc='upper right', bbox_to_anchor=(1.25, 1))
+  plt.xlim(0,100)
+  plt.ylim(0,500000)
+
+  # Add grid lines
+  plt.grid(True, linestyle='--', alpha=0.7)
+
+  plt.show()
+  
+def plot_edit_nb_vote(edit, time):
+  sum_revisions = edit.groupby('user_name')['revisions'].sum().reset_index()
+
+  merged_df = pd.merge(sum_revisions, 
+                     time.groupby('Source')['Voting_time'].count().reset_index(), 
+                     left_on='user_name', 
+                     right_on='Source', 
+                     how='inner')
+  # Set a color palette
+  colors = sns.color_palette("viridis", as_cmap=True)
+
+  # Create a scatter plot with additional styling
+  plt.figure(figsize=(10, 6))
+  scatter = sns.scatterplot(x='Voting_time', y='revisions',data=merged_df, hue='Voting_time', palette=colors, size='Voting_time', sizes=(50, 100), edgecolor='w', linewidth=0.5)
+  sns.kdeplot(x='Voting_time', y='revisions', data=merged_df, fill=True, cmap='viridis', levels=10,thresh=0.03, ax=scatter)
+  # Customize the plot
+  plt.title('Scatter Plot of Sum of Revisions vs. Number of vote', fontsize=16)
+  plt.xlabel('Number of vote', fontsize=14)
+  plt.ylabel('Sum of Revisions', fontsize=14)
+  plt.legend(title='Average Voting Time', title_fontsize='12', loc='upper right', bbox_to_anchor=(1.25, 1))
+
+  # Add grid lines
+  plt.grid(True, linestyle='--', alpha=0.7)
+
+  plt.show()
+
+  #Zoom
+  # Set a color palette
+  colors = sns.color_palette("viridis", as_cmap=True)
+
+  # Create a scatter plot with additional styling
+  plt.figure(figsize=(10, 6))
+  scatter = sns.scatterplot(x='Voting_time', y='revisions',data=merged_df, hue='Voting_time', palette=colors, size='Voting_time', sizes=(50, 200), edgecolor='w', linewidth=0.5)
+  sns.kdeplot(x='Voting_time', y='revisions', data=merged_df, fill=True, cmap='viridis', levels=10,thresh=0.05, ax=scatter)
+  # Customize the plot
+  plt.title('Scatter Plot of Sum of Revisions vs. Number of vote (Zoom)', fontsize=16)
+  plt.xlabel('Number of vote', fontsize=14)
+  plt.ylabel('Sum of Revisions', fontsize=14)
+  plt.legend(title='Average Voting Time', title_fontsize='12', loc='upper right', bbox_to_anchor=(1.25, 1))
+  plt.xlim(0,200)
+  plt.ylim(0,500000)
+
+  # Add grid lines
+  plt.grid(True, linestyle='--', alpha=0.7)
+
+  plt.show()
+
+def select_study_case(year, com,  ts, df_dict):
+  df = df_dict[year]
+  filter_com = df[df['Community']==com]
+  list_source = list(filter_com['Source'])
+  filter_df_ts = ts[ts['Source'].isin(list_source)]
+  filter_df_ts = filter_df_ts[filter_df_ts['Year']==year]
+  return filter_df_ts
+
+def plot_com_graph(agg_data, df_dict):
+  # Set the style
+  sns.set(style="whitegrid")
+
+  # Create a 3x5 grid of subplots (adjust the layout based on your preference)
+  fig, axes = plt.subplots(5, 2, figsize=(18, 30), sharey='row')
+
+  # Flatten the 2D array of subplots to simplify indexing
+  axes = axes.flatten()
+
+  # Iterate over the DataFrame dictionary and plot on each subplot
+  for i, (year, df) in enumerate(agg_data.items()):
+      # Boxplot for the sum of revisions
+      sns.barplot(x='Community', y='sum_normalized', data=df, palette='colorblind', ax=axes[i])
+      axes[i].set_title(f'Revisions by Community - {year}')
+      axes[i].set_xlabel('Community')
+      axes[i].set_ylabel('Normalized sum of Revisions')
+
+      # Violin plot for the mean number of revisions
+      ax_violin = axes[i].twinx()  # Create a second y-axis for the violin plot
+      sns.violinplot(x='Community', y='revisions', data=df_dict[year], ax=ax_violin, color='skyblue')
+      ax_violin.set_ylabel('Number of Revisions per user')
+
+  # Adjust layout
+  plt.tight_layout()
+  plt.show()
+
+def plot_top_k(top_dict, df_dict):
+  # Plotting the top 10 user_name in terms of revisions for each community in subplots
+  sns.set(style="whitegrid")
+
+  # Iterate through the years in top_users_dict
+  for year, top_users_df in top_dict.items():
+      # Create a 3x5 grid of subplots (adjust the layout based on your preference)
+      g = sns.FacetGrid(top_users_df, col="Community", col_wrap=3, height=6, sharey=False, col_order=sorted(df_dict[year]['Community'].unique()))
+      g.map(sns.barplot, 'Source', 'revisions', palette='colorblind')
+
+      # Set titles and labels
+      g.set_titles(f"Community {{col_name}} - Year {year}")
+      g.set_axis_labels("User_name", "Number of Revisions")
+      g.set(xticks=[])
+
+      # Add labels for each bar
+      def add_labels(*args, **kwargs):
+          ax = plt.gca()
+          for p in ax.patches:
+              ax.annotate(p.get_height(), (p.get_x() + p.get_width() / 2., p.get_height()),
+                          ha='center', va='center', xytext=(0, 5), textcoords='offset points', size = 10)
+
+      # Modify the label text to user_name
+      g.map(lambda *args, **kwargs: add_labels(*args, **kwargs, label='Source'))
+
+      plt.show()
+
 def revision_stat(dataset):
     dataset = dataset.reset_index()
-    melted_df= dataset.melt(id_vars=['user_name', 'Result'], var_name='Month', value_name='Revisions')
-    result_stat = melted_df.groupby(['Result', 'Month'])['Revisions'].agg(
-    	mean=np.mean,
-    	confidence_interval=lambda x: list(stats.norm.interval(0.95, loc=np.mean(x), scale=stats.sem(x)))
-	).reset_index()
-    result_stat['Month'] = result_stat['Month'].str.extract(r'(-?\d+)').astype(int)
-    result_stat[['low', 'up']] = pd.DataFrame(result_stat['confidence_interval'].tolist())
-    result_stat = result_stat.drop('confidence_interval', axis=1)
-
-    return result_stat
+    melted_df = dataset.melt(id_vars=['user_name', 'Result'], var_name='Month', value_name='Revisions')
+    melted_df['mean'] = melted_df.groupby(['Result', 'Month'])['Revisions'].transform('mean')
+    
+    # Calculate confidence interval
+    ci = melted_df.groupby(['Result', 'Month'])['Revisions'].agg(['mean', stats.sem]).reset_index()
+    ci['lower'] = ci['mean'] - 1.96 * ci['sem']
+    ci['upper'] = ci['mean'] + 1.96 * ci['sem']
+    ci.rename(columns={'mean': 'center'}, inplace=True)
+    ci = ci.drop('sem', axis=1)
+    ci['Month'] = ci['Month'].str.extract(r'(-?\d+)').astype(int)
+    ci = ci.sort_values(by=['Result', 'Month', ], ascending=[True, True])
+    return ci
 
 def create_df_causal(election, revision):
 
