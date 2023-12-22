@@ -17,7 +17,7 @@ To extract the timing of votes, we used the timestamps given in the raw data and
 
 <img src="assets/img/time_series/hist_voting_time.png" width="750px" height=auto frameborder="0" position="relative">
 
-By seeing the distribution of voting times, we were surprised to discover a bimodal distribution (when using a log scale) and in conjunction with our idea of splitting voters into two groups, we were tempted to explain this phenomenon as indicating the actual existence of two groups of voters separated by their voting time. However, after some investigation of the data and looking into the literature about the RfA rules, we quickly realized that this bimodal distribution can actually be easily explained by the fact that some targets that were not elected would be re-nominated and thus would have a second round of votes (or even more). And after delving deeper into the data and with the information we found on the RfA process, we were able to define properties of the voting time enabling us to distinguish multiple rounds of votes for a given target. We could also check that the resulting rounds were consistent with the data by extracting some comments coherent with our assumptions, for example:
+By seeing the distribution of voting times, we were surprised to discover a bimodal distribution (when using a log scale) and in conjunction with our idea of splitting voters into two groups, we were tempted to explain this phenomenon as indicating the actual existence of two groups of voters separated by their voting time. However, after some investigation of the data and looking into the literature about the RfA rules, we quickly realized that this bimodal distribution can actually be easily explained by the fact that some targets that were not elected would be re-nominated and thus would have a second round of votes (or even more). After delving deeper into the data and with the information we found on the RfA process, we were able to define properties of the voting time enabling us to distinguish multiple rounds of votes for a given target. We could also check that the resulting rounds were consistent with the data by extracting some comments coherent with our assumptions, for example:
 
 <img src="assets/img/time_series/pdf_voting_time.png" width="750px" height=auto frameborder="0" position="relative">
 
@@ -25,7 +25,7 @@ Once this processing step done, we ended up with a heavy tailed distribution of 
 
 <img src="assets/img/time_series/table_emma.png" width="750px" height=auto frameborder="0" position="relative">
 
-Our attempt at extracting 2 voting groups therefore does not seem to correspond to the reality of votes, but instead of coming to a conclusion too quickly, we preferred to verify our hypothesis by directly examining the behavior of sources. We extracted the mean and standard deviation of each source votes and displayed their distribution.
+Our attempt at extracting 2 voting groups does not seem to correspond to the reality of votes. But instead of coming to a conclusion too quickly, we preferred to verify our hypothesis by directly examining the behavior of sources. We extracted the mean and standard deviation of each source votes and displayed their distribution.
 
 <img src="assets/img/time_series/mean_std_time.png" width="750px" height=auto frameborder="0" position="relative">
 
@@ -34,7 +34,8 @@ However, despite the fact that we were unable to extract clearly separated group
 
 <img src="assets/img/time_series/hist_votes_per_source.png" width="750px" height=auto frameborder="0" position="relative">
 
-Indeed, we can see that the majority of sources only vote a small number of times, and that only a few of them vote a lot, as shown by the heavy tailed distribution. We therefore wanted to check whether by chance the most active sources voted earlier than the others, with the aim of having a greater impact. To do this, we plotted the distribution of voting times of the sources against the number of votes they cast.
+In fact, we can see that the majority of sources only vote a small number of times, and that only a few of them vote a lot, as shown by the heavy tailed distribution. We therefore wanted to check whether by chance the most active sources voted earlier than the others, with the aim of having a greater impact. To do this, we plotted the distribution of voting times of the 
+sources against the number of votes they cast.
 
 <img src="assets/img/time_series/mean_voting_time_nuage_points.png" width="750px" height=auto frameborder="0" position="relative">
 
@@ -46,26 +47,25 @@ To carry on in the present manner, we decided to focus on votes themselves, in p
 
 <img src="assets/img/time_series/median_quartiles_over_time.png" width="750px" height=auto frameborder="0" position="relative">
 
-Much to our surprise, we saw that the outcome of an election was in fact determined rather quickly in most cases, as suggests the clear separation of means at the beginning of the election (after aggregating all rounds for all targets) for all successful and failed nominations (left figure). This plot also allowed us to verify that the proportion of positive and negative votes was indeed correlated to the final decision of the election, as suggests the absence of overlap of confidence intervals of the means. To go further, we also computed the evolution of the quartiles and the median of votes over time to learn about the dispersion of the trends and it is clear that the distributions are clearly distinct this time as well (right figure), with again a clear gap at the very beginning of the election, that only slightly decreases.
+Much to our surprise, we saw that the outcome of an election was in fact determined rather quickly in most cases ! This is suggested by the clear separation of means at the beginning of the election (after aggregating all rounds for all targets) for all successful and failed nominations (left figure). This plot also tells us that the proportion of positive and negative votes was indeed correlated to the final decision of the election, as suggests the absence of overlap of confidence intervals of the means. To go further, we also computed the evolution of the quartiles and the median of votes over time to learn about the dispersion of the trends and it is clear that the distributions are clearly distinct this time as well (right figure), with again a clear gap at the very beginning of the election, that only slightly decreases.
 
-It is therefore obvious that the outcome of an election is determined very quickly and that votes that follow mostly go along with it, only slightly alleviating the initial trend. To go further in this analysis, we decided to implement a classification model enabling to predict if an admin will be elected or not only given the first votes input.
+It is therefore obvious that the outcome of an election is determined very quickly and that votes that follow mostly go along with it, only slightly alleviating the initial trend. To go further in this analysis, we implemented a classification model enabling us to predict if an admin will be elected or not only given the first votes input.
 
 <img src="assets/img/time_series/prediction_scores.png" width="750px" height=auto frameborder="0" position="relative">
 
 We chose to evaluate predictions of our model with the accuracy, precision and recall metrics in order to have a better idea of how predictions perform. Obtained results are consistent with what we observed previously, namely the performance plateau is reached very quickly for the three metrics. By studying furthermore the curve values, we were able to see that the accuracy is relatively high (reaching a plateau at 0.87), but knowing the imbalance in the quantity of successful nominations compared to failed ones (62% of targets are accepted), it is very likely that this metric is biased if for instance the predicted model easily predicts that nominations are accepted. In order to avoid this bias, we preferred to focus on the precision and recall metrics. Given the results, it seems that the model generates very few false negatives, as suggests the recall value that reaches a plateau at 93%, and stays relatively stable, no matter the number of votes considered. Precision on the other hand is very similar to the accuracy, and therefore made us conclude that the errors of the model are mainly false positives.
 
-In the end, it seems that in most cases, the first votes input are a good indicator of whether a request will be rejected or not. It is however harder to know with certainty if it will be accepted since in a number of cases, first votes are in favor of requests that will be rejected eventually. This is easily illustrated when looking at the distribution of votes over time for successful and failed requests.
+Interestingly, it seems that in most cases, the first votes input are a good indicator of whether a request will be rejected or not. It is however harder to know with certainty if it will be accepted, since in a number of case, first votes are in favor of requests that will be rejected eventually. This is easily illustrated when looking at the distribution of votes over time for successful and failed requests.
 
 <img src="assets/img/time_series/hist_vote_over_time.png" width="750px" height=auto frameborder="0" position="relative">
 
-We see in fact that despite that the distributions are clearly different and that the rejected requests are more negative than the accepted ones, they still partially overlap, in particular in the positive part of the voting time distribution.
+The distributions are in fact clearly different, that is, the rejected requests are more negative than the accepted ones. They still partially overlap however, in particular in the positive part of the voting time distribution.
 
 Two considerations are relevant there :
 Firstly, we can successfully predict with such accuracy the result of an election from the first votes input. This makes us think that there is a possibility that the first negative votes influence the following votes, and therefore may determine the election outcome prematurely. It would therefore be interesting to verify if the correlation we observed between the first votes and the final outcome is causal and indicates an influence, or if other factors are implied that can explain both the initial negative trend and the final outcome of the election.
 Secondly, for cases in which the first votes are rather positive, it is more difficult to predict the final outcome of the election. This begs to consider the possibility that a vote or a group of votes input later in the election may influence the final outcome of the election.
 
-
-In order to effectively answer both these questions, and thus have a more nuanced vision of votes that compose an election, we decided to use comments that are at our disposal. In fact, comments are a very rich source of information that the votes do not give by themselves, since votes are just binary values, and as such do not allow to figure out the intensity and the real intention of a voter. Using comments therefore allows us to have a better view of votes and that way maybe be more nuanced in our analysis.
+To effectively answer both these questions and have a more nuanced vision of votes that compose an election, we decided to use comments that are at our disposal. Obviously, comments are a very rich source of information that the votes do not give by themselves as they do not express the intensity and the real intention of a voter. Using comments therefore allows us to have a better view of votes and that way maybe be more nuanced in our analysis.
 
 Our first approach to use comments was to perform a sentiment analysis on the comments in order to extract the polarity of each comment so that we have an idea of the intensity of votes, since such an analysis generates a continuous value score between -1 and 1 for a given text, -1 meaning the text is totally negative, neutral if it is 0, and totally positive if it is 1.
 
@@ -81,7 +81,7 @@ From this new data, we decided to reproduce previous analyses by using sentiment
 
 <img src="assets/img/time_series/median_quartiles_over_time_sentiment.png" width="750px" height=auto frameborder="0" position="relative">
 
-In fact, as suggests the above figure, we can see that the trend curves are way too close to get any relevant conclusion, despite that the accepted requests are effectively slightly less positive than rejected requests. We can still note that the values dispersion is bigger with sentiment scores than votes despite that, with most comments being neutral, we were expecting to have closer values instead.
+In fact, as the above figure suggests, we can see that the trend curves are way too close to get any relevant conclusion, despite that the accepted requests are effectively slightly less positive than rejected requests. We can still note that the values dispersion is bigger with sentiment scores than votes despite that, with most comments being neutral, we were expecting to have closer values instead.
 In the end, we had to accept that the distribution of sentiment scores over time was mostly the consequence of the score distribution, and not a consequence of the success or failure of a request.
 
 This failed tentative did not stop us, and we still wanted to investigate comments in other ways. In fact, we realized that the positive or negativity of comments is not a relevant factor to take into account, and that the reasoning behind votes is more complex. We then decided to look at the semantics of the comments. In particular, we used topic modeling in order to extract the main topics of the comments and have an idea of what is discussed in the comments.
@@ -154,14 +154,14 @@ Overall the prevalent topics across models all have references to the work done 
 </div>
 --------------------------
 
-## *Number of edit evolution per election* 
+## * Users activity: a concret factor shaping the election outcomes* 
 <div align="justify">
 Let’s see if the number of edits is really an important feature for a target to be elected. Looking at the average number of edits made by targets in a 1-year period before and after the result of their last election, we observe the same inverted V shape, with the point indicating the election results, for people who were elected and rejected. Nevertheless we observe a significant difference between the two groups in terms of average number of edits, confirming what we had observed to be an important theme in comments across all years.
 
 <img src="assets/img/edit/avg_edit_last_election.png" width="750px" height=auto frameborder="0" position="relative">
 
 </div>
-## *Number of edit accross time* 
+### *But couldn't voter activity on the platform also be a factor of influence?* 
 <div align="justify">
 Now that we've identified the significance of the number of edits for target users, the next question is whether this factor also influences source users. To explore this, we investigated whether individuals making the most revisions were also among the first to vote, potentially indicating a greater influence. To do this, we created a plot showing the total number of users against the average voting time for these users.
 
@@ -175,7 +175,7 @@ In the subsequent graph, we observed that these points lack significance due to 
 </div>
 --------------------------
 
-## *Zoom in on communities* 
+## *Sub-communities of a large community, or how a population breaks down into groups by similarity of opinion* 
 <div align="justify">
 To see if any features stand out within communities, we created a weighted projected graph by grouping together sources that voted the same way for one or more targets, then extracted communities using Louvain's algorithm. Communities are extracted by year, so that we can study the variation in the characteristics of each one over time, with some perhaps standing out at a specific period that we wouldn't have noticed with a more global view.
 Overall, the number of communities per year varies between 3 and 6, and their size fluctuates between less than 1% to over 40% of the year's sources, with the majority having high percentages. 
@@ -185,7 +185,8 @@ Overall, the number of communities per year varies between 3 and 6, and their si
 In the following, we will analyze some of the larger communities and focus on smaller ones, where we expect to see more pronounced behaviors/characteristics, less smoothed out by the large number of people.
 
 </div>
-## *Community analysis*
+### *What characterizes these communities, and what can we learn from them?
+*
 <div align="justify">
 In order to have a reference point when studying the communities, and also to be able to check that there is no variation within the years themselves, which could induce a bias in our analyses, we began by extracting the proportions of positive, neutral and negative votes for each year.
 
@@ -226,12 +227,14 @@ To gain deeper insights, we shifted our focus to individual users within communi
 However, when we factored in their voting time, a key element in understanding potential influence in future vote, we found no substantial differences compared to other users. Once again, our analysis suggests that when assessing a user's influence on others, clear patterns are elusive.
 
 Despite the distinctive features observed within these small communities, it is legitimate to question their representativity as voting sources. It could be that our community extraction algorithm has grouped together only the most extreme individuals within a given community in a given year, and with source votes spanning several years, it is pertinent to ask whether these communities are not in fact small entities independent of the voting process aimed at electing administrators for Wikipedia.
-</div>
-## *What are the links between communities* 
-<div align="justify">
-We then wanted to analyze the evolution of the different communities year by year. We chose to do it through the Jaccard similarity, which allows us to measure the similarity between two community source sets.
 
-In the following graph nodes are communities arranged by year, their size represents the number of sources in them. Edges represent the similarities with their width and transparency. Thick and opaque mean big similarity. 
+</div>
+## * The evolution of communities, or how groups spread and divide over time* 
+<div align="justify">
+  
+Considering communities individually is important for understanding what characterizes them and extracting more precise and specific factors within elections. However, it's also important to remember that communities are part of a whole, and that they evolve over time, just as the platform grows over time. We therefore felt the need to analyze the link between communities over time. To do this, we chose to measure the similarity between communities in each successive year using Jaccard similarity, which allows us to measure the similarity between two community source sets.
+
+In the following graph nodes are communities arranged by year, their size represents the number of sources in them. Edges represent the similarities with their width and transparency. Thick and opaque mean big similarities. 
 
 <img src="assets/img/community_evolutions/com_evo.jpg" width="750px" height=auto frameborder="0" position="relative">
 
@@ -260,8 +263,17 @@ First let see if this observation is not directly correlated to the number of to
 We see that the same patterns arise for the model with nine topics but not with the 7-topics models. But the 9-topics model does not seem to amplify the number of different topics dominant inside communities. 
 </div>
 
-## *Conclusion* 
+## *Time for conclusions: what can we draw from all these considerations?* 
 
+Our exploration of Wikipedia Requests for Adminship (RfA) elections through data analysis has brought to light several key insights. While we failed to identify distinct groups of voters based on voting time, we were able to uncover a pretty clear correlation between the first votes cast and the final outcome of the election. But what does this correlation mean? Is it indicative of a causal relationship? Or are there other factors at play that explain both the initial trend and the final outcome of the election?
+
+To answer these questions, we delved deeper into the data, exploring the comments left by voters in an attempt to understand the motivations behind their votes. What emerged from this exploration is one specific aspect that we believe is crucial in understanding what shape the decision of accepting a new admin or not: the quantity of edits.
+
+With this in mind, we decided to explore the number of edits per user over time and check for any correlation between election and activity on the platform. And indeed, we found significant influence of the number of edits on the elections. This metric likely serves as a tangible indicator of a user's involvement and impact within the Wikipedia community, hence its importance for being accepted as an admin.
+
+This discovery led us to reject our initial hypothesis of a potential source of influence in the voters, and instead speculate that the only factor that matters is a factual and objective assessment of the user's activity on the platform. However and with the aim of not being too hasty in our conclusions, we decided to take a closer look at smaller groups of voters, in the hope of finding some evidence of influence that could be masked by the overall trend. In this regard, we extracted communities of voters based on their votes and analyzed their behavior again.
+
+But this new approach, while revealing new considerations and some singular patterns, didn't lead to conclusions that couldn't be explained by our previous findings. In the end, it might seem that this is exactly what has enabled Wikipedia to maintain stability despite its considerable growth: the ability of its community members to make decisions as objectively as possible, taking into account concrete factors rather than a game of influence and who's the strongest. 
 
 
 
