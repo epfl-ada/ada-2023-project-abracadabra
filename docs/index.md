@@ -17,9 +17,9 @@ blala
 
 ### *Exemple how to add img* 
 
-<iframe src="assets/img/crepe.jpg " width="750px" height="530px" frameborder="0" position="relative">Title 1</iframe>
+<iframe src="assets/img/crepe.jpg " width="750px" height="530px" frameborder="1" position="relative">Title 1</iframe>
 
-<iframe src="assets/img/crepe.jpg " width="750px" height="530px" frameborder="0" position="relative">Title 2</iframe>
+<iframe src="assets/img/crepe.jpg " width="750px" height="530px" frameborder="1" position="relative">Title 2</iframe>
 
 bislls
 
