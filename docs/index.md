@@ -4,45 +4,45 @@
 
 <div align="justify">
 How wonderful are the online communities! In the vast landscape of the digital era, the emergence of online communities stands as a demonstration of the transformative power of the internet. This virtual world offers a unique and powerful means for people from every part of the globe to connect and exchange ideas, fostering the development of new tools and platforms from collaborative efforts, of which Wikipedia is a prime example. However, the growth of these communities brings along a new set of challenges related to the organization and management at such a large scale: How can thousands to millions of users make a decision together and agree on common rules and goals?
- \
+ \\
 To address this question, we study the case of Wikipedia, the largest online encyclopedia, which has been built and maintained by millions of volunteers over the past two decades. In particular, we focus on the English Wikipedia, which is the largest Wikipedia edition with 7 million articles and 46 million registered users and for which we have access to a comprehensive dataset spanning from 2003 to 2013, focusing on Wikipedia elections, namely the : “Requests for Adminship” (RfA), as well as a dataset of the number of monthly edits per user over the same period.
 The relevance of choosing Wikipedia as a case study is twofold. First, Wikipedia is a unique example of a large-scale online community that has been able to sustain itself over the years and despite its impressive growth. Second, Wikipedia has a well-defined and transparent process for electing administrators with publicly available data, which makes it an ideal case study for understanding the dynamics of collective decision-making in online communities.
-\
+\\
 To introduce our analysis, let's start by presenting our main dataset: Wikipedia Requests for Adminship. This dataset contains the collection of votes cast for the users applying to become administrators of the platform. We therefore have for each of them (referred to as Target) the list of people who took part in the election (referred to as Source) and their respective votes, accompanied in most cases by a comment from the voter. We also have access to the date and time of each vote, as well as the final result of each election. Using all this information, our first approach was to look at the temporal aspect of the votes.
-\
+\\
 </div>
 ## *Voting time and dynamics: How and when are the outcomes of elections settled?s* 
 <div align="justify">
   
 One first step towards understanding the process of collective decision-making is to study the dynamics of voting behavior over time. In particular, we are interested in the temporal patterns of votes and how they relate to the final outcome of the election.
 To extract the timing of votes, we used the timestamps given in the raw data and defined the first vote casted for a target as the starting point of an election round. From there, we wondered if we could extract groups of voters that would vote earlier or later in the election which would be indicative of influential and influenced voters respectively.
-\
+\\
 <img src="assets/img/time_series/hist_voting_time.jpg" width="750px" height=auto frameborder="0" position="relative">
-\
+\\
 By seeing the distribution of voting times, we were surprised to discover a bimodal distribution (when using a log scale) and in conjunction with our idea of splitting voters into two groups, we were tempted to explain this phenomenon as indicating the actual existence of two groups of voters separated by their voting time. However, after some investigation of the data and looking into the literature about the RfA rules, we quickly realized that this bimodal distribution can actually be easily explained by the fact that some targets that were not elected would be re-nominated and thus would have a second round of votes (or even more). After delving deeper into the data and with the information we found on the RfA process, we were able to define properties of the voting time enabling us to distinguish multiple rounds of votes for a given target. We could also check that the resulting rounds were consistent with the data by extracting some comments coherent with our assumptions, for example:
-\
+\\
 <img src="assets/img/time_series/pdf_voting_time.png" width="750px" height=auto frameborder="0" position="relative">
-\
+\\
 Once this processing step done, we ended up with a heavy tailed distribution of voting times with a median of 2 days, consistent over the years. 
-\
+\\
 <img src="assets/img/time_series/table_emma.png" width="750px" height=auto frameborder="0" position="relative">
-\
+\\
 Our attempt at extracting 2 voting groups does not seem to correspond to the reality of votes. But instead of coming to a conclusion too quickly, we preferred to verify our hypothesis by directly examining the behavior of sources. We extracted the mean and standard deviation of each source votes and displayed their distribution.
-\
+\\
 <img src="assets/img/time_series/mean_std_time.png" width="750px" height=auto frameborder="0" position="relative">
-\
+\\
 Once again we get a normal unimodal distribution, such that we can not infer any voting group.
 However, despite the fact that we were unable to extract clearly separated groups of voters based solely on their voting time, we still wanted to take into account the fact that not all sources are equally active in elections:
-\
+\\
 <img src="assets/img/time_series/hist_votes_per_source.png" width="750px" height=auto frameborder="0" position="relative">
-\
+\\
 In fact, we can see that the majority of sources only vote a small number of times, and that only a few of them vote a lot, as shown by the heavy tailed distribution. We therefore wanted to check whether by chance the most active sources voted earlier than the others, with the aim of having a greater impact. To do this, we plotted the distribution of voting times of the 
 sources against the number of votes they cast.
-\
+\\
 <img src="assets/img/time_series/mean_voting_time_nuage_points.jpg" width="750px" height=auto frameborder="0" position="relative">
-\
+\\
 Once again, we observe no meaningful correlation between voting time and the number of votes cast by a source. We can therefore conclude that voting time does not play a decisive role in the process of electing Wikipedia administrators.
-\
+\\
 To carry on in the present manner, we decided to focus on votes themselves, in particular on their evolution over time. More precisely, we wanted to know if supporting or opposing votes are homogeneous over time, or conversely if they diverge at a certain point to reinforce the final decision. We therefore computed the evolution of the mean of votes over time and for each election.
 \
 <img src="assets/img/time_series/mean_ci_over_time.png" width="750px" height=auto frameborder="0" position="relative">
