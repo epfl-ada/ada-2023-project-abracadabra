@@ -1,0 +1,7 @@
+.image-container-50 {
+  display: flex;
+}
+
+.image-container-50 img {
+  width: 50%; /* Adjust the width as needed */
+}
