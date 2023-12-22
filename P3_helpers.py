@@ -38,6 +38,7 @@ FINE_TUNE_STOPWORDS = ["--", "n\'t", "\'s", "\'\'", "font", "``", "color=", "sty
 
 import networkx as nx
 import community
+import louvain as louvain
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -152,6 +153,9 @@ def handle_inconsistencies(df):
     double_vote = df[df.duplicated(['Source', 'Target', 'Comment', 'Date'], keep=False) & df.Date.notnull() & (df.Vote == 0)]
     # Drop the double_vote rows
     df.drop(double_vote.index, inplace=True)
+
+    #Remove year 2003 (only 0.1% of the data)
+    df = df[df['Year'] != 2003]
 
     return df
 
@@ -619,6 +623,40 @@ def plot_mean_std_time(df, plot=None):
     else:
         plt.savefig('Figures/mean_std_time_' + plot + '.png')
         plt.close()
+
+# Voting time of source in function of the number of votes
+def plot_voting_time_per_nb_votes(df, plot=None):
+    """ Plot the histogram mean voting time in function of the number of votes
+
+    Args:
+        df (pd.DataFrame): Dataframe containing the data of the votes
+        plot (str, optional): Name of the plot. Defaults to None.
+    """
+    n_vote = df.groupby(['Source']).size().rename('Nb_votes')
+    mean_voting_time = df.groupby(['Source'])['Voting_time'].mean().rename('Mean_voting_time')
+    # Merge both dataframes to have the number of votes and the mean voting time for each source
+    df_voting_time = pd.merge(n_vote, mean_voting_time, on='Source')
+    df_voting_time.columns = ['Nb_votes', 'Mean_voting_time']
+
+    # Plot the mean voting time in function of the number of votes
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.histplot(data=df_voting_time, x='Nb_votes', y='Mean_voting_time', bins=100, ax=ax, cbar=True, norm=LogNorm(), vmin=None, vmax=None)
+    ax.set_title('Mean voting time in function of the number of votes')
+    ax.set_xlim(np.min(df_voting_time['Nb_votes']), np.max(df_voting_time['Nb_votes']))
+    ax.set_ylim(np.min(df_voting_time['Mean_voting_time']), np.max(df_voting_time['Mean_voting_time']))
+    ax.set_xlabel('Number of votes')
+    ax.set_ylabel('Mean voting time')
+
+    # Add the correlation coefficient
+    corr = df_voting_time.corr().loc['Nb_votes', 'Mean_voting_time']
+    ax.text(0.05, 0.95, 'Correlation coefficient = {:.2f}'.format(corr), transform=ax.transAxes, fontsize=14, verticalalignment='top')
+    if plot is not None:
+        plt.savefig('Figures/' + plot + '_mean_voting_time.png')
+        plt.close()
+    else:
+        plt.savefig('Figures/mean_voting_time.png')
+        plt.show()
+
         
 
 ########## TIME SERIES AND SOURCE ANALYSIS ON COMMUNITY FUNCTIONS ##########
