@@ -57,5 +57,36 @@ ksjhh
 
 --------------------------
 
-## *PART 6* 
+## *Community analysis*
+
+On the one hand, let's take relatively large communities, such as those in 2006. It includes 3 communities representing respectively 37%, 37% and 24% of the number of sources having voted that year.  
+On the other hand, let's take smaller communities, for example, those of 2005, which includes 6 communities, 3 of which represent less than 5% of the total number of sources who voted that year (respectively 0.9%, 3.3% and 2.8% for communities 3, 4 and 5 of this year).
+
+If we look at the percentage of vote by type of vote (positive, negative or neutral) for these communities, we observe a very large majority of positive votes, approaching 80%, a smaller proportion of negative votes, close to 15-20%, and a smaller proportion of neutral votes, close to 5% for the year 2006 and generally for the year 2005, in line with the general voting behavior observed previously. However, a closer look at community 3 in 2005 reveals a different pattern. This small community has a percentage of negative votes approaching 80%, while positive votes are close to 15%, suggesting a different voting dynamic.
+
+<iframe src="assets/img/Figures_Gaelle/Vote_percentage_2005_2006.png" width="750px" height="530px" frameborder="0" position="relative">Vote percentage for each type of vote per community in 2005 and 2006</iframe>
+
+Let's see if these differences are also observed in other voting features of these elections. 
+Let's look at community voting time, for example. Generally speaking, the median voting time for 2006 varies between 15 and 25 hours. Similarly, for the larger communities in 2005 (communities 0, 1 and 2), the time varies between 20 and 30 hours, while it is less than 1 hour for the smaller community 3, indicating that it votes very quickly, and close to 40 hours for community 4, indicating a more pronounced voting delay. So, once again, it seems that smaller communities have a more fluctuating voting time dynamic than larger ones.
+
+<iframe src="assets/img/Figures_Gaelle/Median_voting_time_2005_2006.png" width="750px" height="530px" frameborder="0" position="relative">Median voting time in per community 2005 and 2006</iframe>
+
+Finally, let's see if certain communities are more in agreement with the election result, in other words, if the vote of these communities is in agreement with the election result. To do this, we looked at a variety of metrics, including accuracy, precision, recall and specificity. For the year 2006, as well as for the large communities (0, 1, 2) of the year 2005, we observe that the value of each metric is relatively constant, between 0.8 and 0.9, across the communities of their year. 
+On the other hand, for the smallest communities in 2005, the values are more dispersed. In particular, community 3 has a specificity of 1, an accuracy remaining close to 0.8, while recall and precision are equal to 0, indicating that each time this community votes negatively, the election result is also negative, while maintaining an accuracy in the same order of magnitude as that generally observed, meaning that the "quality" of their vote prediction is not altered. The zero value of recall and accuracy indicates that the positive votes of this community were not in agreement with the outcome of the election. Thus, it is possible to distinguish the small size community, 3, of the year 2005 by its characteristics, whereas the larger communities of the same year or those of the year 2006 seem to share more common features, and it therefore seems difficult to distinguish them based on the characteristics studied.
+
+<iframe src="assets/img/Figures_Gaelle/prediction_vote_2005_2006.png" width="750px" height="530px" frameborder="0" position="relative">Result prediction per community in 2005 and 2006</iframe>
+
+So far, we've only highlighted remarkable features of one small community, so we might ask whether the highlighting of these remarkable features is unique to that community. Let's see, for example, whether the prediction of election results stands out for certain communities, and whether these communities are small in size. 
+Extracting the distinctive features, we can see that communities 2 and 4 in 2004 have a specificity equal to 1 (as does community 3 in 2005), meaning that when these sources vote against, the election result is also negative - these communities can be described as "negative but fair". Community 0 in 2009 has a precision of 1, meaning that as soon as it votes positively, the election result is also positive, so it could be described as "nice but fair". Finally, community 4 from 2004 has a low precision value, even though it has a high recall. This means that this community mostly votes positively, but too often for this to be done accurately. We could call it TROUVER UN NOM !!!!
+
+<iframe src="assets/img/Figures_Gaelle/prediction_vote_2004_2009.png" width="750px" height="530px" frameborder="0" position="relative">Result prediction per comunity in 2005 and 2006</iframe>
+
+Now let's see if the communities mentioned are indeed small. 
+
+<iframe src="assets/img/Figures_Gaelle/community_size_proportion_2004_2009.png" width="750px" height="530px" frameborder="0" position="relative">Size proportion of the communties in 2004 and 2009</iframe>
+
+We can see that all these communities are actually small, confirming the observation made earlier that more features can be extracted from small communities, as these features are smoother and therefore less visible in larger ones.
+
+However, despite the distinctive features observed within these small communities, it is legitimate to question their representativity as voting sources. It could be that our community extraction algorithm has grouped together only the most extreme individuals within a given community in a given year, and with source votes spanning several years, it is pertinent to ask whether these communities are not in fact small entities independent of the voting process aimed at electing administrators for Wikipedia.
+
 
