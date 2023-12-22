@@ -55,7 +55,7 @@ XXXXXX
 
 XXXX
 
-<img src="assets/img/sentiment_analysis/pie_sentiment_year.png" width="750px" height=auto frameborder="0" position="relative">
+<img src="assets/img/sentiment_analysis/pie_sentiment_year.png" width="850px" height=auto frameborder="0" position="relative">
 
 XXX
 
