@@ -173,7 +173,6 @@ Let’s see the distribution of the position of each topic for a given comment.
 Remark: Please remember that the LDA algorithm outputs for each comment the list of topics coupled with the probability of the topic to match the comment. When ordering this list in decreasing order we obtain in first position the best topic for a given comment. Below, and for the rest of the topic analysis, you will have the proportion for the topics to be in first or second position in these lists.
 
 <img src="assets/img/topic_general/model3_first2pos.png" width="750px" height=auto frameborder="0" position="relative">
-</div>
 
 **Model with 5 topics:**
 Second the five topics model with its topic word representations:
