@@ -18,7 +18,7 @@ nbTopics_*
 
 #remove too many plots
 20*_*.*.png
-
+*-checkpoint.ipynb
 # Remove the figures
 Figures/
 Figures/*
