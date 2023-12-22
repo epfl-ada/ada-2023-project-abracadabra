@@ -28,38 +28,38 @@ Once this processing step done, we ended up with a heavy tailed distribution of 
 
 Our attempt at extracting 2 voting groups therefore does not seem to correspond to the reality of votes, but instead of coming to a conclusion too quickly, we preferred to verify our hypothesis by directly examining the behavior of sources. We extracted the mean and standard deviation of each source votes and displayed their distribution.
 
-<iframe src="assets/img/time_series/mean_std_time.png" width="1200px" frameborder="0" position="relative">Distribution of the mean and std deviation of voting time per source</iframe>
+<img src="assets/img/time_series/mean_std_time.png" width="750px" height=auto frameborder="0" position="relative">
 
 Once again we get a normal unimodal distribution, such that we can not infer any voting group.
 
 To carry on in the present manner, we decided to focus on votes themselves, in particular on their evolution over time. More precisely, we wanted to know if supporting or opposing votes are homogeneous over time, or conversely if they diverge at a certain point to reinforce the final decision. We therefore computed the evolution of the mean of votes over time and for each election.
 
-<iframe src="assets/img/time_series/mean_ci_over_time.png" width="1200px" height="530px" frameborder="0" position="relative">Evolution of the mean of vote over time</iframe>
+<img src="assets/img/time_series/mean_ci_over_time.png" width="750px" height=auto frameborder="0" position="relative">
 
-<iframe src="assets/img/time_series/median_quartiles_over_time.png" width="1200px" height="530px" frameborder="0" position="relative">Evolution of the median of vote over time</iframe>
+<img src="assets/img/time_series/median_quartiles_over_time.png" width="750px" height=auto frameborder="0" position="relative">
 
 
 Much to our surprise, we saw that the outcome of an election was in fact determined rather quickly in most cases, as suggests the clear separation of means at the beginning of the election (after aggregating all rounds for all targets) for all successful and failed nominations (left figure). This plot also allowed us to verify that the proportion of positive and negative votes was indeed correlated to the final decision of the election, as suggests the absence of overlap of confidence intervals of the means. To go further, we also computed the evolution of the quartiles and the median of votes over time to learn about the dispersion of the trends and it is clear that the distributions are clearly distinct this time as well (right figure), with again a clear gap at the very beginning of the election, that only slightly decreases.
 
 It is therefore obvious that the outcome of an election is determined very quickly and that votes that follow mostly go along with it, only slightly alleviating the initial trend. To go further in this analysis, we decided to implement a classification model enabling to predict if an admin will be elected or not only given the first votes input.
 
-<iframe src="assets/img/time_series/prediction_scores.png" width="1200px" height="530px" frameborder="0" position="relative">Score precision</iframe>
+<img src="assets/img/time_series/prediction_scores.png" width="750px" height=auto frameborder="0" position="relative">
 
 XXXXX
 
-<iframe src="assets/img/time_series/hist_vote_over_time.png" width="1200px" height="530px" frameborder="0" position="relative">Histogram of progressive mean over time</iframe>
+<img src="assets/img/time_series/hist_vote_over_time.png" width="750px" height=auto frameborder="0" position="relative">
 
 XXXXXX
 
-<iframe src="assets/img/sentiment_analysis/hist_sentiment.png" width="1200px" height="530px" frameborder="0" position="relative">Histogram of sentiment compound</iframe>
+<img src="assets/img/sentiment_analysis/hist_sentiment.png" width="750px" height=auto frameborder="0" position="relative">
 
 XXXX
 
-<iframe src="assets/img/sentiment_analysis/pie_sentiment_year.png" width="1200px" height="530px" frameborder="0" position="relative">Pie chart of the sentiment analysis</iframe>
+<img src="assets/img/sentiment_analysis/pie_sentiment_year.png" width="750px" height=auto frameborder="0" position="relative">
 
 XXX
 
-<iframe src="assets/img/time_series/median_quartiles_over_time_sentiment.png" width="1200px" height="530px" frameborder="0" position="relative">Histogram of sentiment compound</iframe>
+<img src="assets/img/time_series/median_quartiles_over_time_sentiment.png" width="750px" height=auto frameborder="0" position="relative">
 
 XXXX
 --------------------------
@@ -85,7 +85,7 @@ Let’s see the distribution of the position of each topic for a given comment.
 
 Remark: Please remember that the LDA algorithm outputs for each comment the list of topics coupled with the probability of the topic to match the comment. When ordering this list in decreasing order we obtain in first position the best topic for a given comment. Below, and for the rest of the topic analysis, you will have the proportion for the topics to be in first or second position in these lists.
 
-<iframe src="assets/img/topic_general/model3_first2pos.png" width="1200px" height="530px" frameborder="0" position="relative">Model with 3 topics - Proportion of topics’ mentions in first and second position</iframe>
+<img src="assets/img/topic_general/model3_first2pos.png" width="750px" height=auto frameborder="0" position="relative">
 
 **Model with 5 topics:**
 Second the five topics model with its topic word representations:
@@ -96,7 +96,7 @@ Second the five topics model with its topic word representations:
 
 - The topic 4 composition: edits (0.047), edit (0.026), wikipedia (0.026), oppose (0.025), user (0.022), need (0.019), good (0.019), article (0.018), experience (0.018), admin (0.017), work (0.014), summary (0.012), contribution (0.011), like (0.010), polic (0.010)
 
-<iframe src="assets/img/topic_general/model5_first2pos.png" width="1200px" height="530px" frameborder="0" position="relative">Model with 5 topics - Proportion of topics’ mentions in first and second position</iframe>
+<img src="assets/img/topic_general/model5_first2pos.png" width="750px" height=auto frameborder="0" position="relative">
 
 **Model with 7 topics:**
 Third the seven topics model with its topic word representations:
@@ -105,8 +105,7 @@ Third the seven topics model with its topic word representations:
 
 - The topic 5 composition: support (0.147), good (0.071), admin (0.041), user (0.038), editor (0.028), great (0.025), work (0.020), seen (0.016), contributor (0.015), 've (0.015), tool (0.014), excellent (0.013), strong (0.012), like (0.011), candidat (0.008)
 
-<iframe src="assets/img/topic_general/model7_first2pos.png" width="1200px" height="530px" frameborder="0" position="relative">Model with 7 topics - Proportion of topics’ mentions in first and second position</iframe>
-
+<img src="assets/img/topic_general/model7_first2pos.png" width="750px" height=auto frameborder="0" position="relative">
 **Model with 9 topics:**
 Fourth the nine topics model with its topic word representations:
 
@@ -114,7 +113,7 @@ Fourth the nine topics model with its topic word representations:
 
 - The topic 4 composition: support (0.305), good (0.071), admin (0.035), user (0.030), editor (0.024), great (0.022), strong (0.021), look (0.015), excellent (0.014), contributor (0.014), like (0.013), tool (0.013), course (0.009), fine (0.009), abus (0.009)
 
-<iframe src="assets/img/topic_general/model9_first2pos.png" width="1200px" height="530px" frameborder="0" position="relative">Model with 9 topics - Proportion of topics’ mentions in first and second position</iframe>
+<img src="assets/img/topic_general/model9_first2pos.png" width="750px" height=auto frameborder="0" position="relative">
 
 We see that the more represented topics (top 1-2) across all the models are always strongly linked to words related to edits and what seems to be the quality of these edits. 
 
@@ -134,17 +133,17 @@ Overall the prevalent topics across models all have references to the work done 
 
 Let’s see if the number of edits is really an important feature for a target to be elected. Looking at the average number of edits made by targets in a 1-year period before and after the result of their last election, we observe the same inverted V shape, with the point indicating the election results, for people who were elected and rejected. Nevertheless we observe a significant difference between the two groups in terms of average number of edits, confirming what we had observed to be an important theme in comments across all years.
 
-<iframe src="assets/img/edit/avg_edit_last_election.png" width="1200px" height="530px" frameborder="0" position="relative">Average edit 12 months before and after the election</iframe>
+<img src="assets/img/edit/avg_edit_last_election.png" width="750px" height=auto frameborder="0" position="relative">
 
 
 ## *Number of edit accross time* 
 Now that we've identified the significance of the number of edits for target users, the next question is whether this factor also influences source users. To explore this, we investigated whether individuals making the most revisions were also among the first to vote, potentially indicating a greater influence. To do this, we created a plot showing the total number of users against the average voting time for these users.
 
-<iframe src="assets/img/edit/revision_vs_avg_voting_time.png" width="1200px" height="530px" frameborder="0" position="relative">Scatter plot of the number of revision versus the average voting time per user</iframe>
+<img src="assets/img/edit/revision_vs_avg_voting_time.png" width="750px" height=auto frameborder="0" position="relative">
 
 Upon analysis, we noticed that the majority of data points cluster in a specific area, suggesting few edits for a relatively low voting time. As voting time increases, the number of edits tends to decrease, which aligns with expectations. However, some users who vote early exhibit an unexpectedly high number of revisions. To verify this finding, we further examined the relationship between the number of revisions and the number of participations in votes.
 
-<iframe src="assets/img/edit/revision_vs_nb_vote.png" width="1200px" height="530px" frameborder="0" position="relative">Scatter plot of the number of revision versus the number of participation per user</iframe>
+<img src="assets/img/edit/revision_vs_nb_vote.png" width="750px" height=auto frameborder="0" position="relative">
 
 In the subsequent graph, we observed that these points lack significance due to users participating only once in an election. Consequently, drawing conclusions about the influence of individuals making numerous revisions from these graphs is challenging.
 
@@ -154,7 +153,7 @@ In the subsequent graph, we observed that these points lack significance due to 
 To see if any features stand out within communities, we created a weighted projected graph by grouping together sources that voted the same way for one or more targets, then extracted communities using Louvain's algorithm. Communities are extracted by year, so that we can study the variation in the characteristics of each one over time, with some perhaps standing out at a specific period that we wouldn't have noticed with a more global view.
 Overall, the number of communities per year varies between 3 and 6, and their size fluctuates between less than 1% to over 40% of the year's sources, with the majority having high percentages. 
 
-<iframe src="assets/img/Figures_Gaelle/Table_community_size.png" width="1200px" height="530px" frameborder="0" position="relative">Community size</iframe>
+<img src="assets/img/Figures_Gaelle/Table_community_size.png" width="750px" height=auto frameborder="0" position="relative">
 
 In the following, we will analyze some of the larger communities and focus on smaller ones, where we expect to see more pronounced behaviors/characteristics, less smoothed out by the large number of people.
 
@@ -166,26 +165,26 @@ On the other hand, let's take smaller communities, for example, those of 2005, w
 
 If we look at the percentage of vote by type of vote (positive, negative or neutral) for these communities, we observe a very large majority of positive votes, approaching 80%, a smaller proportion of negative votes, close to 15-20%, and a smaller proportion of neutral votes, close to 5% for the year 2006 and generally for the year 2005, in line with the general voting behavior observed previously. However, a closer look at community 3 in 2005 reveals a different pattern. This small community has a percentage of negative votes approaching 80%, while positive votes are close to 15%, suggesting a different voting dynamic.
 
-<iframe src="assets/img/Figures_Gaelle/Vote_percentage_2005_2006.png" width="1200px" height="530px" frameborder="0" position="relative">Vote percentage for each type of vote per community in 2005 and 2006</iframe>
+<img src="assets/img/Figures_Gaelle/Vote_percentage_2005_2006.png" width="750px" height=auto frameborder="0" position="relative">
 
 Let's see if these differences are also observed in other voting features of these elections. 
 Let's look at community voting time, for example. Generally speaking, the median voting time for 2006 varies between 15 and 25 hours. Similarly, for the larger communities in 2005 (communities 0, 1 and 2), the time varies between 20 and 30 hours, while it is less than 1 hour for the smaller community 3, indicating that it votes very quickly, and close to 40 hours for community 4, indicating a more pronounced voting delay. So, once again, it seems that smaller communities have a more fluctuating voting time dynamic than larger ones.
 
-<iframe src="assets/img/Figures_Gaelle/Median_voting_time_2005_2006.png" width="1200px" height="530px" frameborder="0" position="relative">Median voting time in per community 2005 and 2006</iframe>
+<img src="assets/img/Figures_Gaelle/Median_voting_time_2005_2006.png" width="750px" height=auto frameborder="0" position="relative">
 
 Finally, let's see if certain communities are more in agreement with the election result, in other words, if the vote of these communities is in agreement with the election result. To do this, we looked at a variety of metrics, including accuracy, precision, recall and specificity. For the year 2006, as well as for the large communities (0, 1, 2) of the year 2005, we observe that the value of each metric is relatively constant, between 0.8 and 0.9, across the communities of their year. 
 On the other hand, for the smallest communities in 2005, the values are more dispersed. In particular, community 3 has a specificity of 1, an accuracy remaining close to 0.8, while recall and precision are equal to 0, indicating that each time this community votes negatively, the election result is also negative, while maintaining an accuracy in the same order of magnitude as that generally observed, meaning that the "quality" of their vote prediction is not altered. The zero value of recall and accuracy indicates that the positive votes of this community were not in agreement with the outcome of the election. Thus, it is possible to distinguish the small size community, 3, of the year 2005 by its characteristics, whereas the larger communities of the same year or those of the year 2006 seem to share more common features, and it therefore seems difficult to distinguish them based on the characteristics studied.
 
-<iframe src="assets/img/Figures_Gaelle/prediction_vote_2005_2006.png" width="800px" height="530px" frameborder="0" position="relative">Result prediction per community in 2005 and 2006</iframe>
+<img src="assets/img/Figures_Gaelle/prediction_vote_2005_2006.png" width="750px" height=auto frameborder="0" position="relative">
 
 So far, we've only highlighted remarkable features of one small community, so we might ask whether the highlighting of these remarkable features is unique to that community. Let's see, for example, whether the prediction of election results stands out for certain communities, and whether these communities are small in size. 
 Extracting the distinctive features, we can see that communities 2 and 4 in 2004 have a specificity equal to 1 (as does community 3 in 2005), meaning that when these sources vote against, the election result is also negative - these communities can be described as "negative but fair". Community 0 in 2009 has a precision of 1, meaning that as soon as it votes positively, the election result is also positive, so it could be described as "nice but fair". Finally, community 4 from 2004 has a low precision value, even though it has a high recall. This means that this community mostly votes positively, but too often for this to be done accurately. We could call it TROUVER UN NOM !!!!
 
-<iframe src="assets/img/Figures_Gaelle/prediction_vote_2004_2009.png" width="1200px" height="530px" frameborder="0" position="relative">Result prediction per comunity in 2005 and 2006</iframe>
+<img src="assets/img/Figures_Gaelle/prediction_vote_2004_2009.png" width="750px" height=auto frameborder="0" position="relative">
 
 Now let's see if the communities mentioned are indeed small. 
 
-<iframe src="assets/img/Figures_Gaelle/community_size_proportion_2004_2009.png" width="50%" height="30%" frameborder="0" position="relative">Size proportion of the communties in 2004 and 2009</iframe>
+<img src="assets/img/Figures_Gaelle/community_size_proportion_2004_2009.png" width="750px%" height=auto frameborder="0" position="relative">
 
 We can see that all these communities are actually small, confirming the observation made earlier that more features can be extracted from small communities, as these features are smoother and therefore less visible in larger ones.
 
