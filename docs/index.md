@@ -1,13 +1,6 @@
----
-layout: page
-title: The Power of Online Communities and the Art of Large Scale Decision Process
-subtitle: Bla bla bla 
-use-site-title: true
----
-
---------------------------
 <link rel="stylesheet" href="/css/styles.css">
-INTRO
+
+<h1 style="text-align: center;"> The Power of Online Communities and the Art of Large Scale Decision Process </h1>
 
 How wonderful are the online communities! In the vast landscape of the digital era, the emergence of online communities stands as a demonstration of the transformative power of the internet. This virtual world offers a unique and powerful mean for people from every part of the globe to connect and exchange ideas, fostering the development of new tools and platforms from collaborative efforts, of which Wikipedia is a prime example. However, the growth of these communities brings along a new set of challenges related to the organization and management at such a large scale: How can thousands to millions of users make a decision together and agree on common rules and goals?
 
