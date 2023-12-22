@@ -64,7 +64,7 @@ On the other hand, let's take smaller communities, for example, those of 2005, w
 
 If we look at the percentage of vote by type of vote (positive, negative or neutral) for these communities, we observe a very large majority of positive votes, approaching 80%, a smaller proportion of negative votes, close to 15-20%, and a smaller proportion of neutral votes, close to 5% for the year 2006 and generally for the year 2005, in line with the general voting behavior observed previously. However, a closer look at community 3 in 2005 reveals a different pattern. This small community has a percentage of negative votes approaching 80%, while positive votes are close to 15%, suggesting a different voting dynamic.
 
-<iframe src="assets/img/Figures_Gaelle/Vote_percentage_2005_2006.png" width="1100px" height="500px" frameborder="0" position="relative">Vote percentage for each type of vote per community in 2005 and 2006</iframe>
+<iframe src="assets/img/Figures_Gaelle/Vote_percentage_2005_2006.png" width="1150px" height="530px" frameborder="0" position="relative">Vote percentage for each type of vote per community in 2005 and 2006</iframe>
 
 Let's see if these differences are also observed in other voting features of these elections. 
 Let's look at community voting time, for example. Generally speaking, the median voting time for 2006 varies between 15 and 25 hours. Similarly, for the larger communities in 2005 (communities 0, 1 and 2), the time varies between 20 and 30 hours, while it is less than 1 hour for the smaller community 3, indicating that it votes very quickly, and close to 40 hours for community 4, indicating a more pronounced voting delay. So, once again, it seems that smaller communities have a more fluctuating voting time dynamic than larger ones.
