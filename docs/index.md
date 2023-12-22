@@ -219,7 +219,7 @@ To gain deeper insights, we shifted our focus to individual users within communi
 
 However, when we factored in their voting time, a key element in understanding potential influence in future vote, we found no substantial differences compared to other users. Once again, our analysis suggests that when assessing a user's influence on others, clear patterns are elusive.
 
-However, despite the distinctive features observed within these small communities, it is legitimate to question their representativity as voting sources. It could be that our community extraction algorithm has grouped together only the most extreme individuals within a given community in a given year, and with source votes spanning several years, it is pertinent to ask whether these communities are not in fact small entities independent of the voting process aimed at electing administrators for Wikipedia.
+Despite the distinctive features observed within these small communities, it is legitimate to question their representativity as voting sources. It could be that our community extraction algorithm has grouped together only the most extreme individuals within a given community in a given year, and with source votes spanning several years, it is pertinent to ask whether these communities are not in fact small entities independent of the voting process aimed at electing administrators for Wikipedia.
 
 ## *What are the links between communities* 
 
