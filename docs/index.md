@@ -9,9 +9,9 @@ To address this question, we study the case of Wikipedia, the largest online enc
 The relevance of choosing Wikipedia as a case study is twofold. First, Wikipedia is a unique example of a large-scale online community that has been able to sustain itself over the years and despite its impressive growth. Second, Wikipedia has a well-defined and transparent process for electing administrators with publicly available data, which makes it an ideal case study for understanding the dynamics of collective decision-making in online communities.
 
 To introduce our analysis, let's start by presenting our main dataset: Wikipedia Requests for Adminship. This dataset contains the collection of votes cast for the users applying to become administrators of the platform. We therefore have for each of them (referred to as Target) the list of people who took part in the election (referred to as Source) and their respective votes, accompanied in most cases by a comment from the voter. We also have access to the date and time of each vote, as well as the final result of each election. Using all this information, our first approach was to look at the temporal aspect of the votes.
-
+</div>
 ## *Voting time and dynamics: How and when are the outcomes of elections settled?s* 
-
+<div align="justify">
 One first step towards understanding the process of collective decision-making is to study the dynamics of voting behavior over time. In particular, we are interested in the temporal patterns of votes and how they relate to the final outcome of the election.
 To extract the timing of votes, we used the timestamps given in the raw data and defined the first vote casted for a target as the starting point of an election round. From there, we wondered if we could extract groups of voters that would vote earlier or later in the election which would be indicative of influential and influenced voters respectively.
 
@@ -85,15 +85,15 @@ In fact, as suggests the above figure, we can see that the trend curves are way 
 In the end, we had to accept that the distribution of sentiment scores over time was mostly the consequence of the score distribution, and not a consequence of the success or failure of a request.
 
 This failed tentative did not stop us, and we still wanted to investigate comments in other ways. In fact, we realized that the positive or negativity of comments is not a relevant factor to take into account, and that the reasoning behind votes is more complex. We then decided to look at the semantics of the comments. In particular, we used topic modeling in order to extract the main topics of the comments and have an idea of what is discussed in the comments.
-
+</div>
 ## *Topic analysis: What are the decisive aspects of the decision-making process?* 
-
+<div align="justify">
 In this part of the analysis we want to focus on understanding what matters the most in influencing the result of an election, by using the comments that voters may write while casting their votes. 
 
 To do so we used topic modeling to see what topics are more prevalent amongst the comments. We use the Latent Dirichlet Allocation (LDA) algorithm to extract the topics. The prevalent hyperparameter of this method is the number of topics we want to extract, the number of latent dimensions. The LDA algorithm outputs, for each comment, the proportion of comments that can be attributed to each topic. And for each topic of the model we have the list of words, for each topic, with the likelihood of each word's association with that particular topic.
 
 We chose to conduct the analysis for respectively three, five, seven, nine topics, to cover the maximum of the possible range given that comments are not very long - the median of the number of characters is 84 for a maximum length comment of 5638 characters. 
-
+</div>
 **Model with 3 topics:**
 First the three topics model with its topic word representations (we only show words with a coefficient of participation in the topic bigger than 0.01 as for the rest of this analysis): 
 
@@ -108,8 +108,10 @@ Let’s see the distribution of the position of each topic for a given comment.
 Remark: Please remember that the LDA algorithm outputs for each comment the list of topics coupled with the probability of the topic to match the comment. When ordering this list in decreasing order we obtain in first position the best topic for a given comment. Below, and for the rest of the topic analysis, you will have the proportion for the topics to be in first or second position in these lists.
 
 <img src="assets/img/topic_general/model3_first2pos.png" width="750px" height=auto frameborder="0" position="relative">
+</div>
 
 **Model with 5 topics:**
+<div align="justify">
 Second the five topics model with its topic word representations:
 
 - The topic 1 composition: admin (0.016), user (0.015), think (0.012), vote (0.009), people (0.008), thing (0.008), adminship (0.008), 've (0.008), time (0.007), wikipedia (0.007), like (0.007), editor (0.006), way (0.006), know (0.006), powe (0.005)
@@ -149,17 +151,18 @@ For the model with 7 topics, it is less clear but we can see in the 5th topic (o
 For the model with 9 topics we see that the most appearing topic in first position (the 4th) is also composed of words referring to edits and work done: “editor”, “contributor” and “tool” (2.4%, 1.4% and 1.3%). The second most appearing topic in first position (the 0th) is positive and also has work related words and edit theme references. 
 
 Overall the prevalent topics across models all have references to the work done by the vottee as editors and their contributions. So we will in the next section explore more about the edits with a more direct source through our secondary dataset - see the resources tab.
-
+</div>
 --------------------------
 
 ## *Number of edit evolution per election* 
-
+<div align="justify">
 Let’s see if the number of edits is really an important feature for a target to be elected. Looking at the average number of edits made by targets in a 1-year period before and after the result of their last election, we observe the same inverted V shape, with the point indicating the election results, for people who were elected and rejected. Nevertheless we observe a significant difference between the two groups in terms of average number of edits, confirming what we had observed to be an important theme in comments across all years.
 
 <img src="assets/img/edit/avg_edit_last_election.png" width="750px" height=auto frameborder="0" position="relative">
 
-
+</div>
 ## *Number of edit accross time* 
+<div align="justify">
 Now that we've identified the significance of the number of edits for target users, the next question is whether this factor also influences source users. To explore this, we investigated whether individuals making the most revisions were also among the first to vote, potentially indicating a greater influence. To do this, we created a plot showing the total number of users against the average voting time for these users.
 
 <img src="assets/img/edit/revision_vs_avg_voting_time.png" width="750px" height=auto frameborder="0" position="relative">
@@ -169,10 +172,11 @@ Upon analysis, we noticed that the majority of data points cluster in a specific
 <img src="assets/img/edit/revision_vs_nb_vote.png" width="750px" height=auto frameborder="0" position="relative">
 
 In the subsequent graph, we observed that these points lack significance due to users participating only once in an election. Consequently, drawing conclusions about the influence of individuals making numerous revisions from these graphs is challenging.
-
+</div>
 --------------------------
 
 ## *Zoom in on communities* 
+<div align="justify">
 To see if any features stand out within communities, we created a weighted projected graph by grouping together sources that voted the same way for one or more targets, then extracted communities using Louvain's algorithm. Communities are extracted by year, so that we can study the variation in the characteristics of each one over time, with some perhaps standing out at a specific period that we wouldn't have noticed with a more global view.
 Overall, the number of communities per year varies between 3 and 6, and their size fluctuates between less than 1% to over 40% of the year's sources, with the majority having high percentages. 
 
@@ -180,8 +184,9 @@ Overall, the number of communities per year varies between 3 and 6, and their si
 
 In the following, we will analyze some of the larger communities and focus on smaller ones, where we expect to see more pronounced behaviors/characteristics, less smoothed out by the large number of people.
 
-
+</div>
 ## *Community analysis*
+<div align="justify">
 In order to have a reference point when studying the communities, and also to be able to check that there is no variation within the years themselves, which could induce a bias in our analyses, we began by extracting the proportions of positive, neutral and negative votes for each year.
 
 <img src="assets/img/Figures_Gaelle/vote_prop_all_years.png" width="750px" height=auto frameborder="0" position="relative">
@@ -221,9 +226,9 @@ To gain deeper insights, we shifted our focus to individual users within communi
 However, when we factored in their voting time, a key element in understanding potential influence in future vote, we found no substantial differences compared to other users. Once again, our analysis suggests that when assessing a user's influence on others, clear patterns are elusive.
 
 Despite the distinctive features observed within these small communities, it is legitimate to question their representativity as voting sources. It could be that our community extraction algorithm has grouped together only the most extreme individuals within a given community in a given year, and with source votes spanning several years, it is pertinent to ask whether these communities are not in fact small entities independent of the voting process aimed at electing administrators for Wikipedia.
-
+</div>
 ## *What are the links between communities* 
-
+<div align="justify">
 We then wanted to analyze the evolution of the different communities year by year. We chose to do it through the Jaccard similarity, which allows us to measure the similarity between two community source sets.
 
 In the following graph nodes are communities arranged by year, their size represents the number of sources in them. Edges represent the similarities with their width and transparency. Thick and opaque mean big similarity. 
@@ -253,11 +258,11 @@ First let see if this observation is not directly correlated to the number of to
 <img src="assets/img/community_evolutions/9_topic_com_evo.jpg" width="750px" height=auto frameborder="0" position="relative">
 
 We see that the same patterns arise for the model with nine topics but not with the 7-topics models. But the 9-topics model does not seem to amplify the number of different topics dominant inside communities. 
-
+</div>
 
 ## *Conclusion* 
 
 
 
 
-</div>
+
