@@ -213,7 +213,7 @@ For the model with 7 topics, it is less clear but we can see in the 5th topic (o
 
 For the model with 9 topics we see that the most appearing topic in first position (the 4th) is also composed of words referring to edits and work done: “editor”, “contributor” and “tool” (2.4%, 1.4% and 1.3%). The second most appearing topic in first position (the 0th) is positive and also has work related words and edit theme references. 
 
-Overall the prevalent topics across models all have references to the work done by the votee as editors and their contributions. In the next section we will explore further about the edits with a more direct source through our secondary dataset - see the resources tab.
+Generally speaking, it seems that the most prevalent topics among the models all refer to the activity and amount of work provided for the nominees as editors on the platform. This information is particularly interesting in the sense that it reveals that a key aspect motivating source votes is very concrete and objective. To find out more about how closely this observation actually corresponds to the reality of the facts, we're going to explore user activity on Wikipedia in greater depth to link it to the elections with the help of a second dataset.
 
 --------------------------
 
@@ -351,7 +351,7 @@ Now let’s have a closer look at the topics’ evolution. Starting with the mod
 <img src="assets/img/community_evolutions/5_topic_com_evo.jpg" width="750px" height=auto frameborder="0" position="relative">
 
 <div align="justify">
-Here we can see that even if we have a prevalent topic (3rd one) overall sources, the second most dominant one appears to be the first for some communities and even an overall topic with few share of matching comments is the most dominant one in 2004 and 2013. What is interesting is that they both have many communities. 
+Here we can see that even if we have a prevalent topic (3rd one) over all comments, the second most dominant one appears to be the first for some communities. For some, it's even a relatively infrequent topic that emerges as the dominant one, in 2004 and 2013 namely. What is interesting is that they both have many communities. 
 </div>
 
 So we may think that having many communities is linked with having many topics and different central criteria to vote. 
