@@ -40,7 +40,7 @@ Once this processing step done, we ended up with a heavy tailed distribution of 
 
 
 
-<img src="assets/img/time_series/table_emma.png" width="750px" height=auto frameborder="0" position="relative">
+<img src="assets/img/time_series/table_emma.jpg" width="750px" height=auto frameborder="0" position="relative">
 
 
 
@@ -323,7 +323,7 @@ This “stable” state from early years that faded out in such ways that commun
 
 These observations seem to underline the fact that there would not be stable groups of voters that vote the same way, at least in the latest years. 
 
-Now let’s have a closer look at the topics’ evolution. It is poor for the model with 3-Topics (see above) as only the same dominant, overall sources, topic is dominant for all communities. For the model with 5-Topics we have : 
+Now let’s have a closer look at the topics’ evolution. Starting with the model of 5-Topics we have : 
 
 <img src="assets/img/community_evolutions/5_topic_com_evo.jpg" width="750px" height=auto frameborder="0" position="relative">
 
@@ -345,7 +345,7 @@ We see that the same patterns arise for the model with nine topics but not with 
 
 Our exploration of Wikipedia Requests for Adminship (RfA) elections through data analysis has brought to light several key insights. While we failed to identify distinct groups of voters based on voting time, we were able to uncover a pretty clear correlation between the first votes cast and the final outcome of the election. But what does this correlation mean? Is it indicative of a causal relationship? Or are there other factors at play that explain both the initial trend and the final outcome of the election?
 
-To answer these questions, we delved deeper into the data, exploring the comments left by voters in an attempt to understand the motivations behind their votes. What emerged from this exploration is one specific aspect that we believe is crucial in understanding what shape the decision of accepting a new admin or not: the quantity of edits.
+To answer these questions, we delved deeper into the data, exploring the comments left by voters in an attempt to understand the motivations behind their votes. What emerged from this exploration is one specific aspect that we believe is crucial in understanding what shapes the decision of accepting a new admin or not: the quantity of edits.
 
 With this in mind, we decided to explore the number of edits per user over time and check for any correlation between election and activity on the platform. And indeed, we found significant influence of the number of edits on the elections. This metric likely serves as a tangible indicator of a user's involvement and impact within the Wikipedia community, hence its importance for being accepted as an admin.
 
