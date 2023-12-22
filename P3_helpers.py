@@ -302,7 +302,7 @@ def cdf_voting_time(df, plot=None):
         plt.savefig('Figures/cdf_voting_time_' + plot + '.png', dpi=300)
         plt.close()
 
-def get_progressive_mean(df):
+def get_progressive_mean(df, sent=False):
     """ Compute the progressive mean of the votes in each round (i.e. the mean of the votes at each time step)
 
     Args:
@@ -314,6 +314,9 @@ def get_progressive_mean(df):
     # Compute the progressive mean of the votes in each round (i.e. the mean of the votes at each time step)
     progressive_mean = df.groupby(['Target', 'Round']).apply(lambda x: x.sort_values('Voting_time').Vote.cumsum() / np.arange(1, len(x)+1)).rename('progressive_mean')
     df = df.join(progressive_mean.droplevel([0,1]))
+    if sent:
+        progressive_sentiment = df.groupby(['Target', 'Round']).apply(lambda x: x.sort_values('Voting_time').sent_score.cumsum() / np.arange(1, len(x)+1)).rename('progressive_sentiment')
+        df = df.join(progressive_sentiment.droplevel([0,1]))
 
     #Convert time in timedelta
     df.Voting_time = pd.to_timedelta(df.Voting_time, unit='h')
@@ -399,7 +402,7 @@ def add_voting_time(grouper, stats, on):
     stats.Voting_time = time_to_float(stats.Voting_time)
     return stats
 
-def get_quartiles(grouper, on):
+def get_quartiles(grouper, on, feature='progressive_mean'):
     """ Compute the median, first and last quartile of the votes in each round
 
     Args:
@@ -409,12 +412,12 @@ def get_quartiles(grouper, on):
         quartiles (pd.DataFrame): Dataframe containing the median, first and last quartile of the votes in each round
     """
     # Compute the median, first and last quartile of the votes in each round
-    quartiles = grouper.progressive_mean.quantile([0.25, 0.5, 0.75]).unstack(level=2).reset_index()
+    quartiles = grouper[feature].quantile([0.25, 0.5, 0.75]).unstack(level=2).reset_index()
     quartiles.rename(columns={0.25: 'lower', 0.5: 'center', 0.75: 'upper'}, inplace=True)
     quartiles = add_voting_time(grouper, quartiles, on)
     return quartiles
 
-def get_confidence_interval(grouper, on):
+def get_confidence_interval(grouper, on, feature='progressive_mean'):
     """ Compute the mean and 95% confidence interval of the votes in each round
 
     Args:
@@ -424,7 +427,7 @@ def get_confidence_interval(grouper, on):
         ci (pd.DataFrame): Dataframe containing the mean and 95% confidence interval of the votes in each round
     """
     # Compute the mean and 95% confidence interval of the votes in each round
-    ci = grouper.progressive_mean.agg(['mean', stats.sem]).reset_index()
+    ci = grouper[feature].agg(['mean', stats.sem]).reset_index()
     ci['lower'] = ci['mean'] - 1.96 * ci['sem']
     ci['upper'] = ci['mean'] + 1.96 * ci['sem']
     ci.rename(columns={'mean': 'center'}, inplace=True)
@@ -432,7 +435,7 @@ def get_confidence_interval(grouper, on):
     return ci
 
 # Scatter plot of the progressive mean by voting time and vote number
-def plot_time_distribution(df, x, plot=None):
+def plot_time_distribution(df, x, feature = 'progressive_mean', plot=None):
     """ Plot the distribution of the progressive mean over time
 
     Args:
@@ -443,8 +446,8 @@ def plot_time_distribution(df, x, plot=None):
     data.Voting_time = time_to_float(data.Voting_time)
     fig, axes = plt.subplots(1,2,figsize=(20, 6))
     # Plot the histogram in 2D with log scale colorbar
-    sns.histplot(data=data[data.Results==-1], x=x, y='progressive_mean', ax=axes[0], color='tab:blue', cbar=True, norm=LogNorm(), vmin=None, vmax=None, bins=100)
-    sns.histplot(data=data[data.Results==1], x=x, y='progressive_mean', ax=axes[1], color='tab:orange', cbar=True, norm=LogNorm(), vmin=None, vmax=None, bins=100)
+    sns.histplot(data=data[data.Results==-1], x=x, y=feature, ax=axes[0], color='tab:blue', cbar=True, norm=LogNorm(), vmin=None, vmax=None, bins=100)
+    sns.histplot(data=data[data.Results==1], x=x, y=feature, ax=axes[1], color='tab:orange', cbar=True, norm=LogNorm(), vmin=None, vmax=None, bins=100)
     axes[0].set_ylim(-1.01, 1.01)
     axes[1].set_ylim(-1.01, 1.01)
     axes[0].set_xlim(data[x].min(), data[x].max())
@@ -456,11 +459,17 @@ def plot_time_distribution(df, x, plot=None):
     if x == 'Voting_time': 
         axes[0].set_xlabel('Voting time')
         axes[1].set_xlabel('Voting time')
-        fig.suptitle('Histogram of the progressive mean over time')
+        if feature == 'progressive_mean':
+            fig.suptitle('Histogram of the progressive mean over time')
+        elif feature == 'progressive_sentiment':
+            fig.suptitle('Histogram of the progressive sentiment over time')
     elif x == 'Vote_number': 
         axes[0].set_xlabel('Number of votes casted')
         axes[1].set_xlabel('Number of votes casted')
-        fig.suptitle('Histogram of the progressive mean over the number of votes casted')
+        if feature == 'progressive_mean':
+            fig.suptitle('Histogram of the progressive mean over the number of votes casted')
+        elif feature == 'progressive_sentiment':
+            fig.suptitle('Histogram of the progressive sentiment over the number of votes casted')
     
     if plot is None:
         plt.savefig('Figures/hist_progressive_mean_over_' + x.lower() + '.png', dpi=300)
@@ -469,7 +478,7 @@ def plot_time_distribution(df, x, plot=None):
         plt.savefig('Figures/hist_progressive_mean_over_' + x.lower() + '_' + plot + '.png', dpi=300)
         plt.close()
 
-def predict_results(df, n_first_votes, n_folds):
+def predict_results(df, n_first_votes, n_folds, feature='progressive_mean'):
     """ Predict the results of the votes using the progressive mean of the votes in each round
 
     Args:
@@ -480,7 +489,7 @@ def predict_results(df, n_first_votes, n_folds):
     Returns:
         (pd.DataFrame): Dataframe containing the results of the prediction
     """
-    X = df[df.Vote_number <= n_first_votes][['Vote_number', 'progressive_mean', 'Target']]
+    X = df[df.Vote_number <= n_first_votes][['Vote_number', feature, 'Target']]
     X.Target = X.Target.astype('category').cat.codes
     y = df[df.Vote_number <= n_first_votes]['Results']
     clf = GradientBoostingClassifier(random_state=0)
@@ -488,7 +497,7 @@ def predict_results(df, n_first_votes, n_folds):
     scores = cross_validate(clf, X, y, cv=GroupKFold(n_splits=n_folds), groups=X.Target, scoring=('accuracy', 'precision', 'recall'))
     return scores
 
-def early_vote_prediction(df, n_first_votes, n_folds=10):
+def early_vote_prediction(df, n_first_votes, n_folds=10, feature='progressive_mean'):
     """ Compute the scores of the results prediction for different quantities of first votes
 
     Args:
@@ -501,7 +510,7 @@ def early_vote_prediction(df, n_first_votes, n_folds=10):
     """
     scores = pd.DataFrame(index=pd.MultiIndex.from_product([n_first_votes, np.arange(n_folds)], names=['nb_first_votes', 'fold']), columns=[['accuracy', 'precision', 'recall']])
     for n in tqdm(n_first_votes):
-        res = pd.DataFrame(predict_results(df, n, n_folds))
+        res = pd.DataFrame(predict_results(df, n, n_folds, feature))
         scores.loc[n, :] = res[['test_accuracy', 'test_precision', 'test_recall']].values
     scores.reset_index(inplace=True)
     return scores
@@ -652,8 +661,10 @@ def get_progressive_mean_comm(df, communities):
     for year, comm in communities:
         df_comm = df[(df['Year'] == year) & (df['Community'] == comm)]
         if len(df_comm.groupby(['Target', 'Round']).first()) == 1:
-            print(df_comm)
             df_comm['progressive_mean'] = df_comm.sort_values('Voting_time').Vote.cumsum() / np.arange(1, len(df_comm)+1)
+            #Convert time in timedelta
+            df_comm.Voting_time = pd.to_timedelta(df_comm.Voting_time, unit='h')
+            df_comm.sort_values('Voting_time', inplace=True)
         else:
             df_comm = get_progressive_mean(df_comm)
         df_by_year = pd.concat([df_by_year, df_comm])

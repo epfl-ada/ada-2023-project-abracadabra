@@ -18,3 +18,4 @@ nbTopics_*
 
 # Remove the figures
 Figures/
+Figures/*
