@@ -10,7 +10,7 @@ The relevance of choosing Wikipedia as a case study is twofold. First, Wikipedia
 
 --------------------------
 
-## *Time Series and source EMMA* 
+## *Time Series analysis* 
 
 One first step towards understanding the process of collective decision-making is to study the dynamics of voting behavior over time. In particular, we are interested in the temporal patterns of votes and how they relate to the final outcome of the election.
 To extract the timing of votes, we used the timestamps given in the raw data and defined the first vote casted for a target as the starting point of an election round. From there, we wondered if we could extract groups of voters that would vote earlier or later in the election which would be indicative of influential and influenced voters respectively.
@@ -64,7 +64,7 @@ XXX
 XXXX
 --------------------------
 
-## *Topic general et montrer que edits sont importants (JD)* 
+## *Topic analysis* 
 
 In this part of the analysis we want to focus on understanding what matters the most in influencing the result of an election, by using the comments that voters may write while casting their votes. 
 
@@ -106,6 +106,7 @@ Third the seven topics model with its topic word representations:
 - The topic 5 composition: support (0.147), good (0.071), admin (0.041), user (0.038), editor (0.028), great (0.025), work (0.020), seen (0.016), contributor (0.015), 've (0.015), tool (0.014), excellent (0.013), strong (0.012), like (0.011), candidat (0.008)
 
 <img src="assets/img/topic_general/model7_first2pos.png" width="750px" height=auto frameborder="0" position="relative">
+
 **Model with 9 topics:**
 Fourth the nine topics model with its topic word representations:
 
