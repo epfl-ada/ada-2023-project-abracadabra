@@ -16,6 +16,9 @@ cosine_sim.npy
 lda_model_*
 nbTopics_*
 
+#remove too many plots
+20*_*.*.png
+
 # Remove the figures
 Figures/
 Figures/*
